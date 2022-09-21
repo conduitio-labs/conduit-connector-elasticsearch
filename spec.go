@@ -22,12 +22,17 @@ import (
 	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
 )
 
+// version is set during the build process (i.e. the Makefile).
+// It follows Go's convention for module version, where the version
+// starts with the letter v, followed by a semantic version.
+var version = "v0.0.0-dev"
+
 func Specification() sdk.Specification {
 	return sdk.Specification{
 		Name:        "elasticsearch",
 		Summary:     "An Elasticsearch destination plugin for Conduit.",
 		Description: "The Conduit plugin supporting Elasticsearch destination.",
-		Version:     "v0.1.0",
+		Version:     version,
 		Author:      "Miquido",
 		DestinationParams: map[string]sdk.Parameter{
 			destination.ConfigKeyVersion: {
