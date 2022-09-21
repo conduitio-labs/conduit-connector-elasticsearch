@@ -1,7 +1,9 @@
 .PHONY: build test lint
 
+VERSION=$(shell git describe --tags --dirty --always)
+
 build:
-	go build -o conduit-connector-elasticsearch cmd/es/main.go
+	go build -ldflags "-X 'github.com/conduitio-labs/conduit-connector-elasticsearch.version=${VERSION}'" -o conduit-connector-elasticsearch cmd/connector/main.go
 
 # Run required docker containers, execute integration tests, stop containers after tests
 test:
