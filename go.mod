@@ -10,7 +10,7 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.4.0
 	github.com/jaswdr/faker v1.15.0
 	github.com/stretchr/testify v1.8.0
-	go.uber.org/goleak v1.1.12
+	go.uber.org/goleak v1.2.0
 )
 
 require (
@@ -23,6 +23,7 @@ require (
 	github.com/hashicorp/go-plugin v1.4.3 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/matryer/is v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
