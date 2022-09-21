@@ -7,7 +7,7 @@ require (
 	github.com/elastic/go-elasticsearch/v5 v5.6.1
 	github.com/elastic/go-elasticsearch/v6 v6.8.10
 	github.com/elastic/go-elasticsearch/v7 v7.17.1
-	github.com/elastic/go-elasticsearch/v8 v8.3.0
+	github.com/elastic/go-elasticsearch/v8 v8.4.0
 	github.com/jaswdr/faker v1.15.0
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/goleak v1.1.12
