@@ -58,12 +58,12 @@ func (d *Destination) Open(ctx context.Context) (err error) {
 	// Initialize Elasticsearch client
 	d.client, err = elasticsearch.NewClient(d.config.Version, d.config)
 	if err != nil {
-		return fmt.Errorf("connection could not be established: %w", err)
+		return fmt.Errorf("failed creating client: %w", err)
 	}
 
 	// Check the connection
 	if err := d.client.Ping(ctx); err != nil {
-		return fmt.Errorf("connection could not be established: %w", err)
+		return fmt.Errorf("server cannot be pinged: %w", err)
 	}
 
 	// Initialize the buffer
@@ -73,7 +73,7 @@ func (d *Destination) Open(ctx context.Context) (err error) {
 	return nil
 }
 
-func (d *Destination) WriteAsync(ctx context.Context, record sdk.Record, ackFunc sdk.AckFunc) error {
+func (d *Destination) Write(ctx context.Context, recs []sdk.Record) (n int, err error) {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 
