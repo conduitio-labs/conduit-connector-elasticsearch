@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	"github.com/jaswdr/faker"
-	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
 	"github.com/stretchr/testify/require"
 )
 

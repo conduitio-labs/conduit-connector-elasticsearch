@@ -19,8 +19,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	sdk "github.com/conduitio/conduit-connector-sdk"
-	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
 	"io"
 )
 

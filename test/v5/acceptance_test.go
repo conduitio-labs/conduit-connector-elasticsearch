@@ -20,11 +20,11 @@ import (
 	"testing"
 	"time"
 
+	es "github.com/conduitio-labs/conduit-connector-elasticsearch"
+	esDestination "github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	v5 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v5"
 	sdk "github.com/conduitio/conduit-connector-sdk"
-	es "github.com/miquido/conduit-connector-elasticsearch"
-	esDestination "github.com/miquido/conduit-connector-elasticsearch/destination"
-	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
-	v5 "github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch/v5"
 	"go.uber.org/goleak"
 )
 
@@ -33,22 +33,22 @@ type CustomConfigurableAcceptanceTestDriver struct {
 }
 
 func (d *CustomConfigurableAcceptanceTestDriver) GenerateRecord(t *testing.T) sdk.Record {
-	record := d.ConfigurableAcceptanceTestDriver.GenerateRecord(t)
+	record := d.ConfigurableAcceptanceTestDriver.GenerateRecord(t, sdk.OperationCreate)
 
 	// Override Key
 	record.Key = sdk.RawData(strconv.FormatInt(time.Now().UnixMicro(), 10))
 
 	// Override Payload
-	payload := sdk.StructuredData{}
+	after := sdk.StructuredData{}
 
-	for _, v := range record.Payload.(sdk.StructuredData) {
-		payload[fmt.Sprintf(
+	for _, v := range record.Payload.After.(sdk.StructuredData) {
+		after[fmt.Sprintf(
 			"f%s",
 			strconv.FormatInt(time.Now().UnixMicro(), 10),
 		)] = v
 	}
 
-	record.Payload = payload
+	record.Payload.After = after
 
 	return record
 }
