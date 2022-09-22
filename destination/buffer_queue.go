@@ -23,7 +23,6 @@ import (
 type operation struct {
 	CreatedAt time.Time
 	Record    sdk.Record
-	AckFunc   sdk.AckFunc
 	err       error
 }
 
