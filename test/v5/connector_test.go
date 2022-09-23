@@ -306,15 +306,14 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 		}
 	)
 
-	t.Run("writing first 3 records does persists them", func(t *testing.T) {
+	t.Run("one create operation and two upsert operations", func(t *testing.T) {
 		n, err := dest.Write(
 			context.Background(),
 			[]sdk.Record{
-				sdk.SourceUtil{}.NewRecordUpdate(
+				sdk.SourceUtil{}.NewRecordCreate(
 					nil,
 					nil,
 					sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
-					nil,
 					sdk.StructuredData(user1),
 				),
 				sdk.SourceUtil{}.NewRecordUpdate(
@@ -343,7 +342,7 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 		}))
 	})
 
-	t.Run("writing next 2 records does not persist them", func(t *testing.T) {
+	t.Run("create new, update existing", func(t *testing.T) {
 		n, err := dest.Write(
 			context.Background(),
 			[]sdk.Record{
@@ -354,11 +353,10 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 					nil,
 					sdk.StructuredData(user4),
 				),
-				sdk.SourceUtil{}.NewRecordUpdate(
+				sdk.SourceUtil{}.NewRecordCreate(
 					nil,
 					nil,
 					sdk.RawData(fmt.Sprintf("%.0f", user5["id"])),
-					nil,
 					sdk.StructuredData(user5),
 				),
 			},
@@ -369,8 +367,9 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 
 		require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 			user1,
-			user2,
+			user4, // Overrides user2
 			user3,
+			user5,
 		}))
 	})
 
