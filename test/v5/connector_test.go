@@ -416,6 +416,19 @@ func assertIndexIsDeleted(esClient *esV5.Client, index string) bool {
 }
 
 func assertIndexContainsDocuments(t *testing.T, esClient *esV5.Client, documents []map[string]interface{}) error {
+	refresh, err := esClient.Indices.Refresh(
+		esClient.Indices.Refresh.WithIndex("users"),
+	)
+	if err != nil {
+		return fmt.Errorf("error refreshing index: %s", err)
+	}
+	if refresh.StatusCode != 200 {
+		return fmt.Errorf(
+			"error refreshing index, status code %v, status %v",
+			refresh.StatusCode,
+			refresh.Status(),
+		)
+	}
 	// Build the request body.
 	var buf bytes.Buffer
 	query := map[string]interface{}{

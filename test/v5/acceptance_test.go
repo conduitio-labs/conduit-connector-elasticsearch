@@ -32,8 +32,8 @@ type CustomConfigurableAcceptanceTestDriver struct {
 	sdk.ConfigurableAcceptanceTestDriver
 }
 
-func (d *CustomConfigurableAcceptanceTestDriver) GenerateRecord(t *testing.T) sdk.Record {
-	record := d.ConfigurableAcceptanceTestDriver.GenerateRecord(t, sdk.OperationCreate)
+func (d *CustomConfigurableAcceptanceTestDriver) GenerateRecord(t *testing.T, op sdk.Operation) sdk.Record {
+	record := d.ConfigurableAcceptanceTestDriver.GenerateRecord(t, op)
 
 	// Override Key
 	record.Key = sdk.RawData(strconv.FormatInt(time.Now().UnixMicro(), 10))
