@@ -94,7 +94,8 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 				sdk.StructuredData{
 					"foo": complex64(1 + 2i),
 				},
-			))
+			),
+		)
 
 		require.Nil(t, metadata)
 		require.Nil(t, payload)

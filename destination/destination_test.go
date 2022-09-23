@@ -19,12 +19,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sdk "github.com/conduitio/conduit-connector-sdk"
-	"github.com/jaswdr/faker"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"testing"
+
+	sdk "github.com/conduitio/conduit-connector-sdk"
+	"github.com/jaswdr/faker"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewDestination(t *testing.T) {

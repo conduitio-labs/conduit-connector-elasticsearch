@@ -19,6 +19,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"testing"
+
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	v7 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v7"
@@ -26,8 +29,6 @@ import (
 	esV7 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/require"
-	"log"
-	"testing"
 )
 
 func TestOperationsWithSmallestBulkSize(t *testing.T) {

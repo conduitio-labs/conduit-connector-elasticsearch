@@ -19,9 +19,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	sdk "github.com/conduitio/conduit-connector-sdk"
-	"io"
 )
 
 func NewDestination() sdk.Destination {
@@ -191,17 +192,16 @@ func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, err
 				itemResponse.ID,
 				operationType,
 			)
-		} else {
-			return n + 1, fmt.Errorf(
-				"item with key=%s %s failure: [%s] %s: %s",
-				itemResponse.ID,
-				operationType,
-				itemResponse.Error.Type,
-				itemResponse.Error.Reason,
-				itemResponse.Error.CausedBy,
-			)
 		}
 
+		return n + 1, fmt.Errorf(
+			"item with key=%s %s failure: [%s] %s: %s",
+			itemResponse.ID,
+			operationType,
+			itemResponse.Error.Type,
+			itemResponse.Error.Reason,
+			itemResponse.Error.CausedBy,
+		)
 	}
 
 	return len(records), nil
