@@ -76,16 +76,18 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
 				[]sdk.Record{
-					sdk.SourceUtil{}.NewRecordCreate(
+					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
 						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						nil,
 						sdk.StructuredData(user1),
 					),
-					sdk.SourceUtil{}.NewRecordCreate(
+					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
 						sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+						nil,
 						sdk.StructuredData(user2),
 					),
 				})
@@ -109,7 +111,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 					),
 				})
 			require.NoError(t, err)
-			require.Equal(t, 2, n)
+			require.Equal(t, 1, n)
 
 			require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 				user2,
@@ -135,8 +137,8 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 					),
 				},
 			)
-			require.Equal(t, 2, n)
 			require.NoError(t, err)
+			require.Equal(t, 2, n)
 
 			require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 				user1,
