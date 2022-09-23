@@ -221,7 +221,11 @@ func (d *Destination) prepareBulkRequestPayload(records []sdk.Record) (*bytes.Bu
 			key = string(record.Key.Bytes())
 		}
 
-		switch record.Operation {
+		op := record.Operation
+		if key == "" {
+			op = sdk.OperationCreate
+		}
+		switch op {
 		case sdk.OperationCreate, sdk.OperationSnapshot:
 			if err := d.writeInsertOperation(data, record); err != nil {
 				return nil, err
