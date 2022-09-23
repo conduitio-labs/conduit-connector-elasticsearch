@@ -22,7 +22,6 @@ import (
 	"log"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
@@ -330,13 +329,13 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 					nil,
 					sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
+					sdk.StructuredData(user3),
 				),
 			},
 		)
 
-		require.Equal(t, 3, n)
 		require.NoError(t, err)
+		require.Equal(t, 3, n)
 		require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 			user1,
 			user2,
@@ -355,14 +354,18 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 					nil,
 					sdk.StructuredData(user4),
 				),
+				sdk.SourceUtil{}.NewRecordUpdate(
+					nil,
+					nil,
+					sdk.RawData(fmt.Sprintf("%.0f", user5["id"])),
+					nil,
+					sdk.StructuredData(user5),
+				),
 			},
 		)
 
-		require.Equal(t, 2, n)
 		require.NoError(t, err)
-
-		// Give Elasticsearch enough time to persist operations
-		time.Sleep(time.Second)
+		require.Equal(t, 2, n)
 
 		require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 			user1,
@@ -383,9 +386,8 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 			},
 		)
 
-		require.Equal(t, 1, n)
 		require.NoError(t, err)
-
+		require.Equal(t, 1, n)
 		require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 			user1,
 			user4, // Overrides user2
