@@ -6,7 +6,9 @@ services:
     environment:
       node.name: 'elasticsearch-v6'
       cluster.name: 'es-v6-docker-cluster'
+      discovery.type: 'single-node'
       bootstrap.memory_lock: 'true'
+      xpack.security.enabled: 'false'
       ES_JAVA_OPTS: '-Xms512m -Xmx512m'
     mem_limit: ${MEM_LIMIT:-1073741824}
     ulimits:

@@ -8,6 +8,7 @@ services:
       cluster.name: 'es-v7-docker-cluster'
       cluster.initial_master_nodes: 'elasticsearch-v7'
       bootstrap.memory_lock: 'true'
+      xpack.security.enabled: 'false'
       ES_JAVA_OPTS: '-Xms512m -Xmx512m'
     mem_limit: ${MEM_LIMIT:-1073741824}
     ulimits:
