@@ -22,12 +22,12 @@ import (
 	"log"
 	"testing"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
-	v7 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v7"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	esV7 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/jaswdr/faker"
+	"github.com/miquido/conduit-connector-elasticsearch/destination"
+	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
+	v7 "github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch/v7"
 	"github.com/stretchr/testify/require"
 )
 

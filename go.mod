@@ -1,4 +1,4 @@
-module github.com/conduitio-labs/conduit-connector-elasticsearch
+module github.com/miquido/conduit-connector-elasticsearch
 
 go 1.18
 

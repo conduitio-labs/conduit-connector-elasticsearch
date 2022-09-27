@@ -15,9 +15,9 @@
 package main
 
 import (
-	es "github.com/conduitio-labs/conduit-connector-elasticsearch"
-	esDestination "github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	sdk "github.com/conduitio/conduit-connector-sdk"
+	es "github.com/miquido/conduit-connector-elasticsearch"
+	esDestination "github.com/miquido/conduit-connector-elasticsearch/destination"
 )
 
 func main() {

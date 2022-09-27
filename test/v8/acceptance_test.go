@@ -20,11 +20,11 @@ import (
 	"testing"
 	"time"
 
-	es "github.com/conduitio-labs/conduit-connector-elasticsearch"
-	esDestination "github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
-	v8 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v8"
 	sdk "github.com/conduitio/conduit-connector-sdk"
+	es "github.com/miquido/conduit-connector-elasticsearch"
+	esDestination "github.com/miquido/conduit-connector-elasticsearch/destination"
+	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
+	v8 "github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch/v8"
 	"go.uber.org/goleak"
 )
 

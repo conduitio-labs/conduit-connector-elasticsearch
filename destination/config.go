@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
 )
 
 const (

@@ -23,12 +23,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
-	v5 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v5"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	esV5 "github.com/elastic/go-elasticsearch/v5"
 	"github.com/jaswdr/faker"
+	"github.com/miquido/conduit-connector-elasticsearch/destination"
+	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
+	v5 "github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch/v5"
 	"github.com/stretchr/testify/require"
 )
 
