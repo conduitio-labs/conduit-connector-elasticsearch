@@ -150,7 +150,7 @@ func (c *Client) PrepareDeleteOperation(key string) (interface{}, error) {
 
 // preparePayload encodes Record's payload as JSON.
 func preparePayload(item *sdk.Record) (json.RawMessage, error) {
-	switch itemPayload := item.Payload.(type) {
+	switch itemPayload := item.Payload.After.(type) {
 	case sdk.StructuredData:
 		return json.Marshal(itemPayload)
 

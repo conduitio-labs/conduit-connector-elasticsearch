@@ -22,15 +22,13 @@ import (
 	"log"
 	"net/http"
 	"testing"
-	"time"
 
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	v5 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v5"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	esV5 "github.com/elastic/go-elasticsearch/v5"
 	"github.com/jaswdr/faker"
-	"github.com/miquido/conduit-connector-elasticsearch/destination"
-	"github.com/miquido/conduit-connector-elasticsearch/internal"
-	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
-	v5 "github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch/v5"
 	"github.com/stretchr/testify/require"
 )
 
@@ -74,44 +72,45 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		)
 
 		t.Run("can be upserted", func(t *testing.T) {
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: map[string]string{
-					"action": internal.OperationUpdate,
-				},
-				Payload:   sdk.StructuredData(user1),
-				Key:       sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: map[string]string{
-					"action": internal.OperationUpdate,
-				},
-				Payload:   sdk.StructuredData(user2),
-				Key:       sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
+			n, err := dest.Write(
+				context.Background(),
+				[]sdk.Record{
+					sdk.SourceUtil{}.NewRecordUpdate(
+						nil,
+						nil,
+						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						nil,
+						sdk.StructuredData(user1),
+					),
+					sdk.SourceUtil{}.NewRecordUpdate(
+						nil,
+						nil,
+						sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+						nil,
+						sdk.StructuredData(user2),
+					),
+				})
+			require.NoError(t, err)
+			require.Equal(t, 2, n)
 
-			// Give Elasticsearch enough time to persist operations
-			time.Sleep(time.Second)
-
-			require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
-				user1,
-				user2,
-			}))
+			require.NoError(
+				t,
+				assertIndexContainsDocuments(t, esClient, []map[string]interface{}{user1, user2}),
+			)
 		})
 
 		t.Run("can be deleted", func(t *testing.T) {
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: map[string]string{
-					"action": internal.OperationDelete,
-				},
-				Payload:   nil,
-				Key:       sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
-
-			// Give Elasticsearch enough time to persist operations
-			time.Sleep(time.Second)
+			n, err := dest.Write(
+				context.Background(),
+				[]sdk.Record{
+					sdk.SourceUtil{}.NewRecordDelete(
+						nil,
+						nil,
+						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+					),
+				})
+			require.NoError(t, err)
+			require.Equal(t, 1, n)
 
 			require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 				user2,
@@ -119,23 +118,26 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		})
 
 		t.Run("can be created", func(t *testing.T) {
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata:  nil,
-				Payload:   sdk.StructuredData(user1),
-				Key:       nil,
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: map[string]string{
-					"action": internal.OperationUpdate,
+			n, err := dest.Write(
+				context.Background(),
+				[]sdk.Record{
+					sdk.SourceUtil{}.NewRecordCreate(
+						nil,
+						nil,
+						nil,
+						sdk.StructuredData(user1),
+					),
+					sdk.SourceUtil{}.NewRecordUpdate(
+						nil,
+						nil,
+						nil,
+						nil,
+						sdk.StructuredData(user2),
+					),
 				},
-				Payload:   sdk.StructuredData(user2),
-				Key:       nil,
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
-
-			// Give Elasticsearch enough time to persist operations
-			time.Sleep(time.Second)
+			)
+			require.NoError(t, err)
+			require.Equal(t, 2, n)
 
 			require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 				user1,
@@ -162,34 +164,36 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		)
 
 		t.Run("can be upserted", func(t *testing.T) {
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: map[string]string{
-					"action": internal.OperationUpdate,
+			n, err := dest.Write(
+				context.Background(),
+				[]sdk.Record{
+					sdk.SourceUtil{}.NewRecordUpdate(
+						nil,
+						nil,
+						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						nil,
+						sdk.RawData(fmt.Sprintf(
+							`{"id":%.f,"email":%q}`,
+							user1["id"],
+							user1["email"],
+						)),
+					),
+					sdk.SourceUtil{}.NewRecordUpdate(
+						nil,
+						nil,
+						sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+						nil,
+						sdk.RawData(fmt.Sprintf(
+							`{"id":%.f,"email":%q}`,
+							user2["id"],
+							user2["email"],
+						)),
+					),
 				},
-				Payload: sdk.RawData(fmt.Sprintf(
-					`{"id":%.f,"email":%q}`,
-					user1["id"],
-					user1["email"],
-				)),
-				Key:       sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: map[string]string{
-					"action": internal.OperationUpdate,
-				},
-				Payload: sdk.RawData(fmt.Sprintf(
-					`{"id":%.f,"email":%q}`,
-					user2["id"],
-					user2["email"],
-				)),
-				Key:       sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
+			)
 
-			// Give Elasticsearch enough time to persist operations
-			time.Sleep(time.Second)
-
+			require.NoError(t, err)
+			require.Equal(t, 2, n)
 			require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 				user1,
 				user2,
@@ -197,49 +201,53 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		})
 
 		t.Run("can be deleted", func(t *testing.T) {
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: map[string]string{
-					"action": internal.OperationDelete,
+			n, err := dest.Write(
+				context.Background(),
+				[]sdk.Record{
+					sdk.SourceUtil{}.NewRecordDelete(
+						nil,
+						nil,
+						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+					),
 				},
-				Payload:   nil,
-				Key:       sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
+			)
 
-			// Give Elasticsearch enough time to persist operations
-			time.Sleep(time.Second)
-
+			require.NoError(t, err)
+			require.Equal(t, 1, n)
 			require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 				user2,
 			}))
 		})
 
 		t.Run("can be created", func(t *testing.T) {
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: nil,
-				Payload: sdk.RawData(fmt.Sprintf(
-					`{"id":%.f,"email":%q}`,
-					user1["id"],
-					user1["email"],
-				)),
-				Key:       nil,
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
-			require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-				Metadata: map[string]string{
-					"action": internal.OperationUpdate,
+			n, err := dest.Write(
+				context.Background(),
+				[]sdk.Record{
+					sdk.SourceUtil{}.NewRecordCreate(
+						nil,
+						nil,
+						nil,
+						sdk.RawData(fmt.Sprintf(
+							`{"id":%.f,"email":%q}`,
+							user1["id"],
+							user1["email"],
+						)),
+					),
+					sdk.SourceUtil{}.NewRecordUpdate(
+						nil,
+						nil,
+						nil,
+						nil,
+						sdk.RawData(fmt.Sprintf(
+							`{"id":%.f,"email":%q}`,
+							user2["id"],
+							user2["email"],
+						)),
+					),
 				},
-				Payload: sdk.RawData(fmt.Sprintf(
-					`{"id":%.f,"email":%q}`,
-					user2["id"],
-					user2["email"],
-				)),
-				Key:       nil,
-				CreatedAt: time.Now(),
-			}, ackFunc(t)))
-
-			// Give Elasticsearch enough time to persist operations
-			time.Sleep(time.Second)
+			)
+			require.Equal(t, 2, n)
+			require.NoError(t, err)
 
 			require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 				user1,
@@ -298,35 +306,35 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 		}
 	)
 
-	t.Run("writing first 3 records does persists them", func(t *testing.T) {
-		require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-			Metadata: map[string]string{
-				"action": internal.OperationUpdate,
+	t.Run("one create operation and two upsert operations", func(t *testing.T) {
+		n, err := dest.Write(
+			context.Background(),
+			[]sdk.Record{
+				sdk.SourceUtil{}.NewRecordCreate(
+					nil,
+					nil,
+					sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+					sdk.StructuredData(user1),
+				),
+				sdk.SourceUtil{}.NewRecordUpdate(
+					nil,
+					nil,
+					sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+					nil,
+					sdk.StructuredData(user2),
+				),
+				sdk.SourceUtil{}.NewRecordUpdate(
+					nil,
+					nil,
+					sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
+					nil,
+					sdk.StructuredData(user3),
+				),
 			},
-			Payload:   sdk.StructuredData(user1),
-			Key:       sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
-			CreatedAt: time.Now(),
-		}, ackFunc(t)))
-		require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-			Metadata: map[string]string{
-				"action": internal.OperationUpdate,
-			},
-			Payload:   sdk.StructuredData(user2),
-			Key:       sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
-			CreatedAt: time.Now(),
-		}, ackFunc(t)))
-		require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-			Metadata: map[string]string{
-				"action": internal.OperationUpdate,
-			},
-			Payload:   sdk.StructuredData(user3),
-			Key:       sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
-			CreatedAt: time.Now(),
-		}, ackFunc(t)))
+		)
 
-		// Give Elasticsearch enough time to persist operations
-		time.Sleep(time.Second)
-
+		require.NoError(t, err)
+		require.Equal(t, 3, n)
 		require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 			user1,
 			user2,
@@ -334,47 +342,51 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 		}))
 	})
 
-	t.Run("writing next 2 records does not persist them", func(t *testing.T) {
-		require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-			Metadata: map[string]string{
-				"action": internal.OperationUpdate,
+	t.Run("create new, update existing", func(t *testing.T) {
+		n, err := dest.Write(
+			context.Background(),
+			[]sdk.Record{
+				sdk.SourceUtil{}.NewRecordUpdate(
+					nil,
+					nil,
+					sdk.RawData(fmt.Sprintf("%.0f", user4["id"])),
+					nil,
+					sdk.StructuredData(user4),
+				),
+				sdk.SourceUtil{}.NewRecordCreate(
+					nil,
+					nil,
+					sdk.RawData(fmt.Sprintf("%.0f", user5["id"])),
+					sdk.StructuredData(user5),
+				),
 			},
-			Payload:   sdk.StructuredData(user4),
-			Key:       sdk.RawData(fmt.Sprintf("%.0f", user4["id"])),
-			CreatedAt: time.Now(),
-		}, ackFunc(t)))
-		require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-			Metadata: map[string]string{
-				"action": internal.OperationUpdate,
-			},
-			Payload:   sdk.StructuredData(user5),
-			Key:       sdk.RawData(fmt.Sprintf("%.0f", user5["id"])),
-			CreatedAt: time.Now(),
-		}, ackFunc(t)))
+		)
 
-		// Give Elasticsearch enough time to persist operations
-		time.Sleep(time.Second)
+		require.NoError(t, err)
+		require.Equal(t, 2, n)
 
 		require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 			user1,
-			user2,
+			user4, // Overrides user2
 			user3,
+			user5,
 		}))
 	})
 
 	t.Run("writing 1 more record fills the buffer and performs actions", func(t *testing.T) {
-		require.NoError(t, dest.WriteAsync(context.Background(), sdk.Record{
-			Metadata: map[string]string{
-				"action": internal.OperationDelete,
+		n, err := dest.Write(
+			context.Background(),
+			[]sdk.Record{
+				sdk.SourceUtil{}.NewRecordDelete(
+					nil,
+					nil,
+					sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
+				),
 			},
-			Payload:   sdk.StructuredData(user3),
-			Key:       sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
-			CreatedAt: time.Now(),
-		}, ackFunc(t)))
+		)
 
-		// Give Elasticsearch enough time to persist operations
-		time.Sleep(time.Second)
-
+		require.NoError(t, err)
+		require.Equal(t, 1, n)
 		require.NoError(t, assertIndexContainsDocuments(t, esClient, []map[string]interface{}{
 			user1,
 			user4, // Overrides user2
@@ -382,14 +394,6 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 			user5,
 		}))
 	})
-}
-
-func ackFunc(t *testing.T) sdk.AckFunc {
-	return func(err error) error {
-		require.NoError(t, err)
-
-		return nil
-	}
 }
 
 func assertIndexIsDeleted(esClient *esV5.Client, index string) bool {
@@ -415,6 +419,19 @@ func assertIndexIsDeleted(esClient *esV5.Client, index string) bool {
 }
 
 func assertIndexContainsDocuments(t *testing.T, esClient *esV5.Client, documents []map[string]interface{}) error {
+	refresh, err := esClient.Indices.Refresh(
+		esClient.Indices.Refresh.WithIndex("users"),
+	)
+	if err != nil {
+		return fmt.Errorf("error refreshing index: %s", err)
+	}
+	if refresh.StatusCode != 200 {
+		return fmt.Errorf(
+			"error refreshing index, status code %v, status %v",
+			refresh.StatusCode,
+			refresh.Status(),
+		)
+	}
 	// Build the request body.
 	var buf bytes.Buffer
 	query := map[string]interface{}{

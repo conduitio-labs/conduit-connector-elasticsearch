@@ -54,11 +54,14 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 			},
 		}
 
-		metadata, payload, err := client.PrepareCreateOperation(sdk.Record{
-			Payload: sdk.StructuredData{
+		metadata, payload, err := client.PrepareCreateOperation(sdk.SourceUtil{}.NewRecordCreate(
+			nil,
+			nil,
+			nil,
+			sdk.StructuredData{
 				"foo": complex64(1 + 2i),
 			},
-		})
+		))
 
 		require.Nil(t, metadata)
 		require.Nil(t, payload)
@@ -79,11 +82,20 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 			},
 		}
 
-		metadata, payload, err := client.PrepareUpsertOperation("key", sdk.Record{
-			Payload: sdk.StructuredData{
-				"foo": complex64(1 + 2i),
-			},
-		})
+		metadata, payload, err := client.PrepareUpsertOperation(
+			"key",
+			sdk.SourceUtil{}.NewRecordUpdate(
+				nil,
+				nil,
+				nil,
+				sdk.StructuredData{
+					"foo": complex64(12 + 2i),
+				},
+				sdk.StructuredData{
+					"foo": complex64(1 + 2i),
+				},
+			),
+		)
 
 		require.Nil(t, metadata)
 		require.Nil(t, payload)

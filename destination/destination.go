@@ -20,11 +20,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sync"
 
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	sdk "github.com/conduitio/conduit-connector-sdk"
-	"github.com/miquido/conduit-connector-elasticsearch/internal"
-	"github.com/miquido/conduit-connector-elasticsearch/internal/elasticsearch"
 )
 
 func NewDestination() sdk.Destination {
@@ -34,10 +32,8 @@ func NewDestination() sdk.Destination {
 type Destination struct {
 	sdk.UnimplementedDestination
 
-	config          Config
-	client          client
-	mutex           sync.Mutex
-	operationsQueue BufferQueue
+	config Config
+	client client
 }
 
 //go:generate moq -out client_moq_test.go . client
@@ -46,6 +42,77 @@ type client = elasticsearch.Client
 // GetClient returns the current Elasticsearch client
 func (d *Destination) GetClient() elasticsearch.Client {
 	return d.client
+}
+
+func (d *Destination) Parameters() map[string]sdk.Parameter {
+	return map[string]sdk.Parameter{
+		ConfigKeyVersion: {
+			Default:  "",
+			Required: true,
+			Description: fmt.Sprintf(
+				"The version of the Elasticsearch service. One of: %s, %s, %s, %s",
+				elasticsearch.Version5,
+				elasticsearch.Version6,
+				elasticsearch.Version7,
+				elasticsearch.Version8,
+			),
+		},
+		ConfigKeyHost: {
+			Default:     "",
+			Required:    true,
+			Description: "The Elasticsearch host and port (e.g.: http://127.0.0.1:9200).",
+		},
+		ConfigKeyUsername: {
+			Default:     "",
+			Required:    false,
+			Description: "The username for HTTP Basic Authentication.",
+		},
+		ConfigKeyPassword: {
+			Default:     "",
+			Required:    false,
+			Description: "The password for HTTP Basic Authentication.",
+		},
+		ConfigKeyCloudID: {
+			Default:     "",
+			Required:    false,
+			Description: "Endpoint for the Elastic Service (https://elastic.co/cloud).",
+		},
+		ConfigKeyAPIKey: {
+			Default:     "",
+			Required:    false,
+			Description: "Base64-encoded token for authorization; if set, overrides username/password and service token.",
+		},
+		ConfigKeyServiceToken: {
+			Default:     "",
+			Required:    false,
+			Description: "Service token for authorization; if set, overrides username/password.",
+		},
+		ConfigKeyCertificateFingerprint: {
+			Default:     "",
+			Required:    false,
+			Description: "SHA256 hex fingerprint given by Elasticsearch on first launch.",
+		},
+		ConfigKeyIndex: {
+			Default:     "",
+			Required:    true,
+			Description: "The name of the index to write the data to.",
+		},
+		ConfigKeyType: {
+			Default:     "",
+			Required:    false,
+			Description: "The name of the index's type to write the data to.",
+		},
+		ConfigKeyBulkSize: {
+			Default:     "1000",
+			Required:    true,
+			Description: "The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.",
+		},
+		ConfigKeyRetries: {
+			Default:     "0",
+			Required:    false,
+			Description: "The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255.",
+		},
+	}
 }
 
 func (d *Destination) Configure(_ context.Context, cfgRaw map[string]string) (err error) {
@@ -58,153 +125,86 @@ func (d *Destination) Open(ctx context.Context) (err error) {
 	// Initialize Elasticsearch client
 	d.client, err = elasticsearch.NewClient(d.config.Version, d.config)
 	if err != nil {
-		return fmt.Errorf("connection could not be established: %w", err)
+		return fmt.Errorf("failed creating client: %w", err)
 	}
 
 	// Check the connection
 	if err := d.client.Ping(ctx); err != nil {
-		return fmt.Errorf("connection could not be established: %w", err)
-	}
-
-	// Initialize the buffer
-	d.mutex = sync.Mutex{}
-	d.operationsQueue = make(BufferQueue, 0, d.config.BulkSize)
-
-	return nil
-}
-
-func (d *Destination) WriteAsync(ctx context.Context, record sdk.Record, ackFunc sdk.AckFunc) error {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
-
-	d.operationsQueue.Enqueue(&operation{
-		CreatedAt: record.CreatedAt,
-		Record:    record,
-		AckFunc:   ackFunc,
-	})
-
-	if uint64(d.operationsQueue.Len()) >= d.config.BulkSize {
-		if err := d.Flush(ctx); err != nil {
-			return err
-		}
+		return fmt.Errorf("server cannot be pinged: %w", err)
 	}
 
 	return nil
 }
 
-func (d *Destination) Flush(ctx context.Context) error {
-	// Check if there are operations in the buffer
-	if d.operationsQueue.Empty() {
-		return nil
-	}
-
+func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, error) {
 	// Execute operations
-	retriesLeft := d.config.Retries
+	// todo return retries
 
-	for {
-		// Set up the buffer for failed operations
-		failedOperations := make(BufferQueue, 0, d.operationsQueue.Len())
-
-		// Prepare request payload
-		data, err := d.prepareBulkRequestPayload(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Send the bulk request
-		response, err := d.executeBulkRequest(ctx, data)
-		if err != nil {
-			return err
-		}
-
-		// Ack results
-		for n, item := range response.Items {
-			// Detect operation result
-			var itemResponse bulkResponseItem
-			var operationType string
-
-			switch {
-			case item.Index != nil:
-				itemResponse = *item.Index
-				operationType = "index"
-
-			case item.Create != nil:
-				itemResponse = *item.Create
-				operationType = "create"
-
-			case item.Update != nil:
-				itemResponse = *item.Update
-				operationType = "update"
-
-			case item.Delete != nil:
-				itemResponse = *item.Delete
-				operationType = "delete"
-
-			default:
-				sdk.Logger(ctx).Warn().Msg("no index, create, update or delete details were found in Elasticsearch response")
-
-				continue
-			}
-
-			// ACK
-			// The order of responses is the same as the order of requests
-			// https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html#bulk-api-response-body
-			ackFunc := d.operationsQueue[n].AckFunc
-
-			if itemResponse.Status >= 200 && itemResponse.Status < 300 {
-				if err := ackFunc(nil); err != nil {
-					return err
-				}
-
-				continue
-			}
-
-			if itemResponse.Error == nil {
-				d.operationsQueue[n].err = fmt.Errorf(
-					"item with key=%s %s failure: unknown error",
-					itemResponse.ID,
-					operationType,
-				)
-			} else {
-				d.operationsQueue[n].err = fmt.Errorf(
-					"item with key=%s %s failure: [%s] %s: %s",
-					itemResponse.ID,
-					operationType,
-					itemResponse.Error.Type,
-					itemResponse.Error.Reason,
-					itemResponse.Error.CausedBy,
-				)
-			}
-
-			failedOperations.Enqueue(d.operationsQueue[n])
-		}
-
-		// Fail pending operations when retries limit is reached
-		if retriesLeft == 0 {
-			for _, failedOperation := range failedOperations {
-				if err := failedOperation.AckFunc(failedOperation.err); err != nil {
-					return err
-				}
-			}
-
-			break
-		}
-
-		// Check if there are operations to retry
-		if failedOperations.Len() == 0 {
-			break
-		}
-
-		// Set up for retry
-		retriesLeft--
-
-		d.operationsQueue = failedOperations
+	// Prepare request payload
+	data, err := d.prepareBulkRequestPayload(records)
+	if err != nil {
+		return 0, err
 	}
 
-	// Reset buffer
-	d.operationsQueue = make(BufferQueue, 0, d.config.BulkSize)
+	// Send the bulk request
+	response, err := d.executeBulkRequest(ctx, data)
+	if err != nil {
+		return 0, err
+	}
 
-	return nil
+	// NB: The order of responses is the same as the order of requests
+	// https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html#bulk-api-response-body
+	for n, item := range response.Items {
+		// Detect operation result
+		var itemResponse bulkResponseItem
+		var operationType string
+
+		switch {
+		case item.Index != nil:
+			itemResponse = *item.Index
+			operationType = "index"
+
+		case item.Create != nil:
+			itemResponse = *item.Create
+			operationType = "create"
+
+		case item.Update != nil:
+			itemResponse = *item.Update
+			operationType = "update"
+
+		case item.Delete != nil:
+			itemResponse = *item.Delete
+			operationType = "delete"
+
+		default:
+			sdk.Logger(ctx).Warn().Msg("no index, create, update or delete details were found in Elasticsearch response")
+
+			continue
+		}
+
+		if itemResponse.Status >= 200 && itemResponse.Status < 300 {
+			continue
+		}
+
+		if itemResponse.Error == nil {
+			return n + 1, fmt.Errorf(
+				"item with key=%s %s failure: unknown error",
+				itemResponse.ID,
+				operationType,
+			)
+		}
+
+		return n + 1, fmt.Errorf(
+			"item with key=%s %s failure: [%s] %s: %s",
+			itemResponse.ID,
+			operationType,
+			itemResponse.Error.Type,
+			itemResponse.Error.Reason,
+			itemResponse.Error.CausedBy,
+		)
+	}
+
+	return len(records), nil
 }
 
 func (d *Destination) Teardown(context.Context) error {
@@ -212,44 +212,37 @@ func (d *Destination) Teardown(context.Context) error {
 }
 
 // prepareBulkRequestPayload converts all pending operations into a valid Elasticsearch Bulk API request.
-func (d *Destination) prepareBulkRequestPayload(ctx context.Context) (*bytes.Buffer, error) {
+func (d *Destination) prepareBulkRequestPayload(records []sdk.Record) (*bytes.Buffer, error) {
 	data := &bytes.Buffer{}
 
-	for _, item := range d.operationsQueue {
-		record := item.Record
-		action := record.Metadata["action"]
-
+	for _, record := range records {
 		var key string
 		if record.Key != nil {
 			key = string(record.Key.Bytes())
 		}
 
+		op := record.Operation
 		if key == "" {
-			action = internal.OperationInsert
-		} else if action == "" {
-			action = internal.OperationUpdate
+			op = sdk.OperationCreate
 		}
-
-		switch action {
-		case internal.OperationInsert:
+		switch {
+		case key == "":
 			if err := d.writeInsertOperation(data, record); err != nil {
 				return nil, err
 			}
 
-		case internal.OperationUpdate:
+		case op == sdk.OperationSnapshot || op == sdk.OperationCreate || op == sdk.OperationUpdate:
 			if err := d.writeUpsertOperation(key, data, record); err != nil {
 				return nil, err
 			}
 
-		case internal.OperationDelete:
+		case op == sdk.OperationDelete:
 			if err := d.writeDeleteOperation(key, data); err != nil {
 				return nil, err
 			}
 
 		default:
-			sdk.Logger(ctx).Warn().Msgf("unsupported action: %s", action)
-
-			continue
+			return nil, fmt.Errorf("operation %v on record %v not supported", record.Operation, record.Key)
 		}
 	}
 
