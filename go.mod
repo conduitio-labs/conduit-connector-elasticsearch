@@ -9,7 +9,7 @@ require (
 	github.com/elastic/go-elasticsearch/v7 v7.17.7
 	github.com/elastic/go-elasticsearch/v8 v8.6.0
 	github.com/jaswdr/faker v1.16.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	go.uber.org/goleak v1.2.1
 )
 
