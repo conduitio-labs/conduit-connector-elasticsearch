@@ -6,7 +6,7 @@ require (
 	github.com/conduitio/conduit-connector-sdk v0.5.1
 	github.com/elastic/go-elasticsearch/v5 v5.6.1
 	github.com/elastic/go-elasticsearch/v6 v6.8.10
-	github.com/elastic/go-elasticsearch/v7 v7.17.7
+	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elastic/go-elasticsearch/v8 v8.7.1
 	github.com/jaswdr/faker v1.16.0
 	github.com/stretchr/testify v1.8.2
