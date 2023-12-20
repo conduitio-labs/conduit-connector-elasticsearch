@@ -1,6 +1,8 @@
 module github.com/conduitio-labs/conduit-connector-elasticsearch
 
-go 1.18
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	github.com/conduitio/conduit-connector-sdk v0.5.1
