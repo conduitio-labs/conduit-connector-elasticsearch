@@ -35,7 +35,7 @@ test:
 	  	if [ $$ret -ne 0 ]; then exit $$ret; fi
 
 lint:
-	golangci-lint run
+	golangci-lint run -v
 
 .PHONY: install-tools
 install-tools:
