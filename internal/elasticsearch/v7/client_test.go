@@ -17,6 +17,7 @@ package v7
 import (
 	"testing"
 
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/stretchr/testify/require"
@@ -55,7 +56,7 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			sdk.StructuredData{
+			opencdc.StructuredData{
 				"foo": complex64(1 + 2i),
 			},
 		))
@@ -82,10 +83,10 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				sdk.StructuredData{
+				opencdc.StructuredData{
 					"foo": complex64(12 + 2i),
 				},
-				sdk.StructuredData{
+				opencdc.StructuredData{
 					"foo": complex64(1 + 2i),
 				},
 			),

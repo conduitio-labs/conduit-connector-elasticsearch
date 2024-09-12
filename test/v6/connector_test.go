@@ -25,6 +25,7 @@ import (
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	v6 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v6"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	esV6 "github.com/elastic/go-elasticsearch/v6"
 	"github.com/jaswdr/faker"
@@ -73,20 +74,20 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be upserted", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
 						nil,
-						sdk.StructuredData(user1),
+						opencdc.StructuredData(user1),
 					),
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user2["id"])),
 						nil,
-						sdk.StructuredData(user2),
+						opencdc.StructuredData(user2),
 					),
 				})
 			require.NoError(t, err)
@@ -101,11 +102,11 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be deleted", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordDelete(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
 					),
 				})
 			require.NoError(t, err)
@@ -119,19 +120,19 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be created", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordCreate(
 						nil,
 						nil,
 						nil,
-						sdk.StructuredData(user1),
+						opencdc.StructuredData(user1),
 					),
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
 						nil,
 						nil,
-						sdk.StructuredData(user2),
+						opencdc.StructuredData(user2),
 					),
 				},
 			)
@@ -165,13 +166,13 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be upserted", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
 						nil,
-						sdk.RawData(fmt.Sprintf(
+						opencdc.RawData(fmt.Sprintf(
 							`{"id":%.f,"email":%q}`,
 							user1["id"],
 							user1["email"],
@@ -180,9 +181,9 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user2["id"])),
 						nil,
-						sdk.RawData(fmt.Sprintf(
+						opencdc.RawData(fmt.Sprintf(
 							`{"id":%.f,"email":%q}`,
 							user2["id"],
 							user2["email"],
@@ -202,11 +203,11 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be deleted", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordDelete(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
 					),
 				},
 			)
@@ -221,12 +222,12 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be created", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordCreate(
 						nil,
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf(
+						opencdc.RawData(fmt.Sprintf(
 							`{"id":%.f,"email":%q}`,
 							user1["id"],
 							user1["email"],
@@ -237,7 +238,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 						nil,
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf(
+						opencdc.RawData(fmt.Sprintf(
 							`{"id":%.f,"email":%q}`,
 							user2["id"],
 							user2["email"],
@@ -308,26 +309,26 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	t.Run("one create operation and two upsert operations", func(t *testing.T) {
 		n, err := dest.Write(
 			context.Background(),
-			[]sdk.Record{
+			[]opencdc.Record{
 				sdk.SourceUtil{}.NewRecordCreate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
-					sdk.StructuredData(user1),
+					opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
+					opencdc.StructuredData(user1),
 				),
 				sdk.SourceUtil{}.NewRecordUpdate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+					opencdc.RawData(fmt.Sprintf("%.0f", user2["id"])),
 					nil,
-					sdk.StructuredData(user2),
+					opencdc.StructuredData(user2),
 				),
 				sdk.SourceUtil{}.NewRecordUpdate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
+					opencdc.RawData(fmt.Sprintf("%.0f", user3["id"])),
 					nil,
-					sdk.StructuredData(user3),
+					opencdc.StructuredData(user3),
 				),
 			},
 		)
@@ -344,19 +345,19 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	t.Run("create new, update existing", func(t *testing.T) {
 		n, err := dest.Write(
 			context.Background(),
-			[]sdk.Record{
+			[]opencdc.Record{
 				sdk.SourceUtil{}.NewRecordUpdate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user4["id"])),
+					opencdc.RawData(fmt.Sprintf("%.0f", user4["id"])),
 					nil,
-					sdk.StructuredData(user4),
+					opencdc.StructuredData(user4),
 				),
 				sdk.SourceUtil{}.NewRecordCreate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user5["id"])),
-					sdk.StructuredData(user5),
+					opencdc.RawData(fmt.Sprintf("%.0f", user5["id"])),
+					opencdc.StructuredData(user5),
 				),
 			},
 		)
@@ -375,11 +376,11 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	t.Run("writing 1 more record fills the buffer and performs actions", func(t *testing.T) {
 		n, err := dest.Write(
 			context.Background(),
-			[]sdk.Record{
+			[]opencdc.Record{
 				sdk.SourceUtil{}.NewRecordDelete(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
+					opencdc.RawData(fmt.Sprintf("%.0f", user3["id"])),
 				),
 			},
 		)

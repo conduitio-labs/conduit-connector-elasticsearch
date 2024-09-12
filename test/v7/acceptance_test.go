@@ -24,6 +24,7 @@ import (
 	esDestination "github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	v7 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v7"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.uber.org/goleak"
 )
@@ -32,16 +33,16 @@ type CustomConfigurableAcceptanceTestDriver struct {
 	sdk.ConfigurableAcceptanceTestDriver
 }
 
-func (d *CustomConfigurableAcceptanceTestDriver) GenerateRecord(t *testing.T, op sdk.Operation) sdk.Record {
+func (d *CustomConfigurableAcceptanceTestDriver) GenerateRecord(t *testing.T, op opencdc.Operation) opencdc.Record {
 	record := d.ConfigurableAcceptanceTestDriver.GenerateRecord(t, op)
 
 	// Override Key
-	record.Key = sdk.RawData(strconv.FormatInt(time.Now().UnixMicro(), 10))
+	record.Key = opencdc.RawData(strconv.FormatInt(time.Now().UnixMicro(), 10))
 
 	// Override Payload
-	after := sdk.StructuredData{}
+	after := opencdc.StructuredData{}
 
-	for _, v := range record.Payload.After.(sdk.StructuredData) {
+	for _, v := range record.Payload.After.(opencdc.StructuredData) {
 		after[fmt.Sprintf(
 			"f%s",
 			strconv.FormatInt(time.Now().UnixMicro(), 10),
@@ -53,7 +54,7 @@ func (d *CustomConfigurableAcceptanceTestDriver) GenerateRecord(t *testing.T, op
 	return record
 }
 
-func (d *CustomConfigurableAcceptanceTestDriver) ReadFromDestination(_ *testing.T, records []sdk.Record) []sdk.Record {
+func (d *CustomConfigurableAcceptanceTestDriver) ReadFromDestination(_ *testing.T, records []opencdc.Record) []opencdc.Record {
 	// No source connector, return wanted records
 	return records
 }

@@ -18,7 +18,7 @@ import (
 	"context"
 	"io"
 
-	sdk "github.com/conduitio/conduit-connector-sdk"
+	"github.com/conduitio/conduit-commons/opencdc"
 )
 
 // Client describes Elasticsearch client interface
@@ -32,10 +32,10 @@ type Client interface {
 	Bulk(ctx context.Context, reader io.Reader) (io.ReadCloser, error)
 
 	// PrepareCreateOperation prepares insert operation definition for Bulk API query.
-	PrepareCreateOperation(item sdk.Record) (metadata interface{}, payload interface{}, err error)
+	PrepareCreateOperation(item opencdc.Record) (metadata interface{}, payload interface{}, err error)
 
 	// PrepareUpsertOperation prepares upsert operation definition for Bulk API query.
-	PrepareUpsertOperation(key string, item sdk.Record) (metadata interface{}, payload interface{}, err error)
+	PrepareUpsertOperation(key string, item opencdc.Record) (metadata interface{}, payload interface{}, err error)
 
 	// PrepareDeleteOperation prepares delete operation definition for Bulk API query.
 	PrepareDeleteOperation(key string) (metadata interface{}, err error)

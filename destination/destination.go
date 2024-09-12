@@ -22,6 +22,8 @@ import (
 	"io"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	"github.com/conduitio/conduit-commons/config"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
@@ -44,11 +46,10 @@ func (d *Destination) GetClient() elasticsearch.Client {
 	return d.client
 }
 
-func (d *Destination) Parameters() map[string]sdk.Parameter {
-	return map[string]sdk.Parameter{
+func (d *Destination) Parameters() config.Parameters {
+	return map[string]config.Parameter{
 		ConfigKeyVersion: {
-			Default:  "",
-			Required: true,
+			Default: "",
 			Description: fmt.Sprintf(
 				"The version of the Elasticsearch service. One of: %s, %s, %s, %s",
 				elasticsearch.Version5,
@@ -56,66 +57,67 @@ func (d *Destination) Parameters() map[string]sdk.Parameter {
 				elasticsearch.Version7,
 				elasticsearch.Version8,
 			),
+			Type: config.ParameterTypeString,
 		},
 		ConfigKeyHost: {
 			Default:     "",
-			Required:    true,
 			Description: "The Elasticsearch host and port (e.g.: http://127.0.0.1:9200).",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyUsername: {
 			Default:     "",
-			Required:    false,
 			Description: "The username for HTTP Basic Authentication.",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyPassword: {
 			Default:     "",
-			Required:    false,
 			Description: "The password for HTTP Basic Authentication.",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyCloudID: {
 			Default:     "",
-			Required:    false,
 			Description: "Endpoint for the Elastic Service (https://elastic.co/cloud).",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyAPIKey: {
 			Default:     "",
-			Required:    false,
 			Description: "Base64-encoded token for authorization; if set, overrides username/password and service token.",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyServiceToken: {
 			Default:     "",
-			Required:    false,
 			Description: "Service token for authorization; if set, overrides username/password.",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyCertificateFingerprint: {
 			Default:     "",
-			Required:    false,
 			Description: "SHA256 hex fingerprint given by Elasticsearch on first launch.",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyIndex: {
 			Default:     "",
-			Required:    true,
 			Description: "The name of the index to write the data to.",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyType: {
 			Default:     "",
-			Required:    false,
 			Description: "The name of the index's type to write the data to.",
+			Type:        config.ParameterTypeString,
 		},
 		ConfigKeyBulkSize: {
 			Default:     "1000",
-			Required:    true,
 			Description: "The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.",
+			Type:        config.ParameterTypeInt,
 		},
 		ConfigKeyRetries: {
 			Default:     "0",
-			Required:    false,
 			Description: "The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255.",
+			Type:        config.ParameterTypeInt,
 		},
 	}
 }
 
-func (d *Destination) Configure(_ context.Context, cfgRaw map[string]string) (err error) {
+func (d *Destination) Configure(_ context.Context, cfgRaw config.Config) (err error) {
 	d.config, err = ParseConfig(cfgRaw)
 
 	return
@@ -136,7 +138,7 @@ func (d *Destination) Open(ctx context.Context) (err error) {
 	return nil
 }
 
-func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, error) {
+func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int, error) {
 	// Execute operations
 	// todo return retries
 
@@ -212,7 +214,7 @@ func (d *Destination) Teardown(context.Context) error {
 }
 
 // prepareBulkRequestPayload converts all pending operations into a valid Elasticsearch Bulk API request.
-func (d *Destination) prepareBulkRequestPayload(records []sdk.Record) (*bytes.Buffer, error) {
+func (d *Destination) prepareBulkRequestPayload(records []opencdc.Record) (*bytes.Buffer, error) {
 	data := &bytes.Buffer{}
 
 	for _, record := range records {
@@ -223,7 +225,7 @@ func (d *Destination) prepareBulkRequestPayload(records []sdk.Record) (*bytes.Bu
 
 		op := record.Operation
 		if key == "" {
-			op = sdk.OperationCreate
+			op = opencdc.OperationCreate
 		}
 		switch {
 		case key == "":
@@ -231,12 +233,12 @@ func (d *Destination) prepareBulkRequestPayload(records []sdk.Record) (*bytes.Bu
 				return nil, err
 			}
 
-		case op == sdk.OperationSnapshot || op == sdk.OperationCreate || op == sdk.OperationUpdate:
+		case op == opencdc.OperationSnapshot || op == opencdc.OperationCreate || op == opencdc.OperationUpdate:
 			if err := d.writeUpsertOperation(key, data, record); err != nil {
 				return nil, err
 			}
 
-		case op == sdk.OperationDelete:
+		case op == opencdc.OperationDelete:
 			if err := d.writeDeleteOperation(key, data); err != nil {
 				return nil, err
 			}
@@ -250,7 +252,7 @@ func (d *Destination) prepareBulkRequestPayload(records []sdk.Record) (*bytes.Bu
 }
 
 // writeInsertOperation adds create new Document without ID request into Bulk API request
-func (d *Destination) writeInsertOperation(data *bytes.Buffer, item sdk.Record) error {
+func (d *Destination) writeInsertOperation(data *bytes.Buffer, item opencdc.Record) error {
 	jsonEncoder := json.NewEncoder(data)
 
 	// Prepare data
@@ -273,7 +275,7 @@ func (d *Destination) writeInsertOperation(data *bytes.Buffer, item sdk.Record) 
 }
 
 // writeUpsertOperation adds upsert a Document with ID request into Bulk API request
-func (d *Destination) writeUpsertOperation(key string, data *bytes.Buffer, item sdk.Record) error {
+func (d *Destination) writeUpsertOperation(key string, data *bytes.Buffer, item opencdc.Record) error {
 	jsonEncoder := json.NewEncoder(data)
 
 	// Prepare data
