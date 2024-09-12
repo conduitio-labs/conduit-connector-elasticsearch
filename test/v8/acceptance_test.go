@@ -86,7 +86,7 @@ func TestAcceptance(t *testing.T) {
 
 				DestinationConfig: destinationConfig,
 
-				AfterTest: func(t *testing.T) {
+				AfterTest: func(_ *testing.T) {
 					if client := dest.GetClient(); client != nil {
 						assertIndexIsDeleted(
 							client.(*v8.Client).GetClient(),
