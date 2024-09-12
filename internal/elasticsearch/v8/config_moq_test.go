@@ -13,40 +13,40 @@ var _ config = &configMock{}
 
 // configMock is a mock implementation of config.
 //
-// 	func TestSomethingThatUsesconfig(t *testing.T) {
+//	func TestSomethingThatUsesconfig(t *testing.T) {
 //
-// 		// make and configure a mocked config
-// 		mockedconfig := &configMock{
-// 			GetAPIKeyFunc: func() string {
-// 				panic("mock out the GetAPIKey method")
-// 			},
-// 			GetCertificateFingerprintFunc: func() string {
-// 				panic("mock out the GetCertificateFingerprint method")
-// 			},
-// 			GetCloudIDFunc: func() string {
-// 				panic("mock out the GetCloudID method")
-// 			},
-// 			GetHostFunc: func() string {
-// 				panic("mock out the GetHost method")
-// 			},
-// 			GetIndexFunc: func() string {
-// 				panic("mock out the GetIndex method")
-// 			},
-// 			GetPasswordFunc: func() string {
-// 				panic("mock out the GetPassword method")
-// 			},
-// 			GetServiceTokenFunc: func() string {
-// 				panic("mock out the GetServiceToken method")
-// 			},
-// 			GetUsernameFunc: func() string {
-// 				panic("mock out the GetUsername method")
-// 			},
-// 		}
+//		// make and configure a mocked config
+//		mockedconfig := &configMock{
+//			GetAPIKeyFunc: func() string {
+//				panic("mock out the GetAPIKey method")
+//			},
+//			GetCertificateFingerprintFunc: func() string {
+//				panic("mock out the GetCertificateFingerprint method")
+//			},
+//			GetCloudIDFunc: func() string {
+//				panic("mock out the GetCloudID method")
+//			},
+//			GetHostFunc: func() string {
+//				panic("mock out the GetHost method")
+//			},
+//			GetIndexFunc: func() string {
+//				panic("mock out the GetIndex method")
+//			},
+//			GetPasswordFunc: func() string {
+//				panic("mock out the GetPassword method")
+//			},
+//			GetServiceTokenFunc: func() string {
+//				panic("mock out the GetServiceToken method")
+//			},
+//			GetUsernameFunc: func() string {
+//				panic("mock out the GetUsername method")
+//			},
+//		}
 //
-// 		// use mockedconfig in code that requires config
-// 		// and then make assertions.
+//		// use mockedconfig in code that requires config
+//		// and then make assertions.
 //
-// 	}
+//	}
 type configMock struct {
 	// GetAPIKeyFunc mocks the GetAPIKey method.
 	GetAPIKeyFunc func() string
@@ -124,7 +124,8 @@ func (mock *configMock) GetAPIKey() string {
 
 // GetAPIKeyCalls gets all the calls that were made to GetAPIKey.
 // Check the length with:
-//     len(mockedconfig.GetAPIKeyCalls())
+//
+//	len(mockedconfig.GetAPIKeyCalls())
 func (mock *configMock) GetAPIKeyCalls() []struct {
 } {
 	var calls []struct {
@@ -150,7 +151,8 @@ func (mock *configMock) GetCertificateFingerprint() string {
 
 // GetCertificateFingerprintCalls gets all the calls that were made to GetCertificateFingerprint.
 // Check the length with:
-//     len(mockedconfig.GetCertificateFingerprintCalls())
+//
+//	len(mockedconfig.GetCertificateFingerprintCalls())
 func (mock *configMock) GetCertificateFingerprintCalls() []struct {
 } {
 	var calls []struct {
@@ -176,7 +178,8 @@ func (mock *configMock) GetCloudID() string {
 
 // GetCloudIDCalls gets all the calls that were made to GetCloudID.
 // Check the length with:
-//     len(mockedconfig.GetCloudIDCalls())
+//
+//	len(mockedconfig.GetCloudIDCalls())
 func (mock *configMock) GetCloudIDCalls() []struct {
 } {
 	var calls []struct {
@@ -202,7 +205,8 @@ func (mock *configMock) GetHost() string {
 
 // GetHostCalls gets all the calls that were made to GetHost.
 // Check the length with:
-//     len(mockedconfig.GetHostCalls())
+//
+//	len(mockedconfig.GetHostCalls())
 func (mock *configMock) GetHostCalls() []struct {
 } {
 	var calls []struct {
@@ -228,7 +232,8 @@ func (mock *configMock) GetIndex() string {
 
 // GetIndexCalls gets all the calls that were made to GetIndex.
 // Check the length with:
-//     len(mockedconfig.GetIndexCalls())
+//
+//	len(mockedconfig.GetIndexCalls())
 func (mock *configMock) GetIndexCalls() []struct {
 } {
 	var calls []struct {
@@ -254,7 +259,8 @@ func (mock *configMock) GetPassword() string {
 
 // GetPasswordCalls gets all the calls that were made to GetPassword.
 // Check the length with:
-//     len(mockedconfig.GetPasswordCalls())
+//
+//	len(mockedconfig.GetPasswordCalls())
 func (mock *configMock) GetPasswordCalls() []struct {
 } {
 	var calls []struct {
@@ -280,7 +286,8 @@ func (mock *configMock) GetServiceToken() string {
 
 // GetServiceTokenCalls gets all the calls that were made to GetServiceToken.
 // Check the length with:
-//     len(mockedconfig.GetServiceTokenCalls())
+//
+//	len(mockedconfig.GetServiceTokenCalls())
 func (mock *configMock) GetServiceTokenCalls() []struct {
 } {
 	var calls []struct {
@@ -306,7 +313,8 @@ func (mock *configMock) GetUsername() string {
 
 // GetUsernameCalls gets all the calls that were made to GetUsername.
 // Check the length with:
-//     len(mockedconfig.GetUsernameCalls())
+//
+//	len(mockedconfig.GetUsernameCalls())
 func (mock *configMock) GetUsernameCalls() []struct {
 } {
 	var calls []struct {
