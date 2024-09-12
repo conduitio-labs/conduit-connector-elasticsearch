@@ -108,6 +108,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 						nil,
 						nil,
 						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.StructuredData(user1),
 					),
 				})
 			require.NoError(t, err)
@@ -209,6 +210,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 						nil,
 						nil,
 						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.StructuredData(user1),
 					),
 				},
 			)
@@ -382,6 +384,7 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 					nil,
 					nil,
 					opencdc.RawData(fmt.Sprintf("%.0f", user3["id"])),
+					opencdc.StructuredData(user3),
 				),
 			},
 		)
