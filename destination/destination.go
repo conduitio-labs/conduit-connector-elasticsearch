@@ -47,74 +47,7 @@ func (d *Destination) GetClient() elasticsearch.Client {
 }
 
 func (d *Destination) Parameters() config.Parameters {
-	return map[string]config.Parameter{
-		ConfigKeyVersion: {
-			Default: "",
-			Description: fmt.Sprintf(
-				"The version of the Elasticsearch service. One of: %s, %s, %s, %s",
-				elasticsearch.Version5,
-				elasticsearch.Version6,
-				elasticsearch.Version7,
-				elasticsearch.Version8,
-			),
-			Type: config.ParameterTypeString,
-		},
-		ConfigKeyHost: {
-			Default:     "",
-			Description: "The Elasticsearch host and port (e.g.: http://127.0.0.1:9200).",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyUsername: {
-			Default:     "",
-			Description: "The username for HTTP Basic Authentication.",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyPassword: {
-			Default:     "",
-			Description: "The password for HTTP Basic Authentication.",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyCloudID: {
-			Default:     "",
-			Description: "Endpoint for the Elastic Service (https://elastic.co/cloud).",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyAPIKey: {
-			Default:     "",
-			Description: "Base64-encoded token for authorization; if set, overrides username/password and service token.",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyServiceToken: {
-			Default:     "",
-			Description: "Service token for authorization; if set, overrides username/password.",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyCertificateFingerprint: {
-			Default:     "",
-			Description: "SHA256 hex fingerprint given by Elasticsearch on first launch.",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyIndex: {
-			Default:     "",
-			Description: "The name of the index to write the data to.",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyType: {
-			Default:     "",
-			Description: "The name of the index's type to write the data to.",
-			Type:        config.ParameterTypeString,
-		},
-		ConfigKeyBulkSize: {
-			Default:     "1000",
-			Description: "The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.",
-			Type:        config.ParameterTypeInt,
-		},
-		ConfigKeyRetries: {
-			Default:     "0",
-			Description: "The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255.",
-			Type:        config.ParameterTypeInt,
-		},
-	}
+	return d.config.Parameters()
 }
 
 func (d *Destination) Configure(_ context.Context, cfgRaw config.Config) (err error) {

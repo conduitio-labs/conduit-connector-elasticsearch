@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate paramgen -output=paramgen.go Config
+
 package destination
 
 import (
@@ -22,34 +24,31 @@ import (
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 )
 
-const (
-	ConfigKeyVersion                = "version"
-	ConfigKeyHost                   = "host"
-	ConfigKeyUsername               = "username"
-	ConfigKeyPassword               = "password"
-	ConfigKeyCloudID                = "cloudId"
-	ConfigKeyAPIKey                 = "apiKey"
-	ConfigKeyServiceToken           = "serviceToken"
-	ConfigKeyCertificateFingerprint = "certificateFingerprint"
-	ConfigKeyIndex                  = "index"
-	ConfigKeyType                   = "type"
-	ConfigKeyBulkSize               = "bulkSize"
-	ConfigKeyRetries                = "retries"
-)
-
 type Config struct {
-	Version                elasticsearch.Version
-	Host                   string
-	Username               string
-	Password               string
-	CloudID                string
-	APIKey                 string
-	ServiceToken           string
-	CertificateFingerprint string
-	Index                  string
-	Type                   string
-	BulkSize               uint64
-	Retries                uint8
+	// The version of the Elasticsearch service. One of: 5, 6, 7, 8.
+	Version elasticsearch.Version `json:"keyVersion" validate:"required"`
+	// The Elasticsearch host and port (e.g.: http://127.0.0.1:9200).
+	Host string `json:"keyHost" validate:"required"`
+	// The username for HTTP Basic Authentication.
+	Username string `json:"keyUsername"`
+	// The password for HTTP Basic Authentication.
+	Password string `json:"keyPassword"`
+	// Endpoint for the Elastic Service (https://elastic.co/cloud).
+	CloudID string `json:"keyCloudID"`
+	// Base64-encoded token for authorization; if set, overrides username/password and service token.
+	APIKey string `json:"keyAPIKey"`
+	// Service token for authorization; if set, overrides username/password.
+	ServiceToken string `json:"keyServiceToken"`
+	// SHA256 hex fingerprint given by Elasticsearch on first launch.
+	CertificateFingerprint string `json:"keyCertificateFingerprint"`
+	// The name of the index to write the data to.
+	Index string `json:"keyIndex"`
+	// The name of the index's type to write the data to.
+	Type string `json:"keyType"`
+	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.
+	BulkSize uint64 `json:"keyBulkSize" default:"1000"`
+	// The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255.
+	Retries uint8 `json:"keyRetries" default:"0"`
 }
 
 func (c Config) GetHost() string {
