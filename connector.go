@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. and Miquido
+// Copyright © 2022 Meroxa, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package elasticsearch
 
 import (
-	elasticsearch "github.com/conduitio-labs/conduit-connector-elasticsearch"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
-func main() {
-	sdk.Serve(elasticsearch.Connector)
+var Connector = sdk.Connector{
+	NewSpecification: Specification,
+	NewSource:        nil,
+	NewDestination:   destination.NewDestination,
 }
