@@ -427,9 +427,9 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV5.Client, documents
 		esClient.Indices.Refresh.WithIndex("users"),
 	)
 	if err != nil {
-		return fmt.Errorf("error refreshing index: %s", err)
+		return fmt.Errorf("error refreshing index: %w", err)
 	}
-	if refresh.StatusCode != 200 {
+	if refresh.StatusCode != http.StatusOK {
 		return fmt.Errorf(
 			"error refreshing index, status code %v, status %v",
 			refresh.StatusCode,
@@ -452,7 +452,7 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV5.Client, documents
 	}
 
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return fmt.Errorf("error encoding query: %s", err)
+		return fmt.Errorf("error encoding query: %w", err)
 	}
 
 	// Search
@@ -462,7 +462,7 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV5.Client, documents
 		esClient.Search.WithBody(&buf),
 	)
 	if err != nil {
-		return fmt.Errorf("error getting response: %s", err)
+		return fmt.Errorf("error getting response: %w", err)
 	}
 
 	defer response.Body.Close()
@@ -471,7 +471,7 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV5.Client, documents
 		var e map[string]interface{}
 
 		if err := json.NewDecoder(response.Body).Decode(&e); err != nil {
-			return fmt.Errorf("error parsing the response body: %s", err)
+			return fmt.Errorf("error parsing the response body: %w", err)
 		}
 
 		// Print the response status and error information.
@@ -485,7 +485,7 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV5.Client, documents
 	var r map[string]interface{}
 
 	if err := json.NewDecoder(response.Body).Decode(&r); err != nil {
-		return fmt.Errorf("error parsing the response body: %s", err)
+		return fmt.Errorf("error parsing the response body: %w", err)
 	}
 
 	hitsMetadata := r["hits"].(map[string]interface{})

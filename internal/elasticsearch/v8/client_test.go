@@ -33,7 +33,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestClient_GetClient(t *testing.T) {
-	var esClient = &elasticsearch.Client{}
+	esClient := &elasticsearch.Client{}
 
 	client := Client{
 		es: esClient,

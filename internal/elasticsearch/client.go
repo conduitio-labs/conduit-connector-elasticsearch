@@ -21,7 +21,7 @@ import (
 	"github.com/conduitio/conduit-commons/opencdc"
 )
 
-// Client describes Elasticsearch client interface
+// Client describes Elasticsearch client interface.
 type Client interface {
 	// Ping executes Elasticsearch ping request.
 	// See: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html

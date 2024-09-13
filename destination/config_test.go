@@ -172,7 +172,7 @@ func TestParseConfig(t *testing.T) {
 	}
 
 	t.Run("Returns config when all required config values were provided", func(t *testing.T) {
-		var cfgRaw = map[string]string{
+		cfgRaw := map[string]string{
 			ConfigKeyVersion:  elasticsearch.Version8,
 			ConfigKeyHost:     fakerInstance.Internet().URL(),
 			ConfigKeyIndex:    fakerInstance.Lorem().Word(),
@@ -198,7 +198,7 @@ func TestParseConfig(t *testing.T) {
 	})
 
 	t.Run("Returns config when all config values were provided", func(t *testing.T) {
-		var cfgRaw = map[string]string{
+		cfgRaw := map[string]string{
 			ConfigKeyVersion:                elasticsearch.Version8,
 			ConfigKeyHost:                   fakerInstance.Internet().URL(),
 			ConfigKeyIndex:                  fakerInstance.Lorem().Word(),
