@@ -50,9 +50,11 @@ func (d *Destination) Parameters() config.Parameters {
 	return d.config.Parameters()
 }
 
-func (d *Destination) Configure(_ context.Context, cfgRaw config.Config) (err error) {
-	d.config, err = ParseConfig(cfgRaw)
-
+func (d *Destination) Configure(ctx context.Context, cfg config.Config) (err error) {
+	err = sdk.Util.ParseConfig(ctx, cfg, &d.config, NewDestination().Parameters())
+	if err != nil {
+		return err
+	}
 	return
 }
 
