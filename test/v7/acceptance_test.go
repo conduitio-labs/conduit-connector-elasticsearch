@@ -63,10 +63,10 @@ func TestAcceptance(t *testing.T) {
 	var dest *esDestination.Destination
 
 	destinationConfig := map[string]string{
-		esDestination.ConfigKeyVersion:  elasticsearch.Version7,
-		esDestination.ConfigKeyHost:     "http://127.0.0.1:9200",
-		esDestination.ConfigKeyIndex:    "acceptance_idx",
-		esDestination.ConfigKeyBulkSize: "100",
+		esDestination.ConfigVersion:  elasticsearch.Version7,
+		esDestination.ConfigHost:     "http://127.0.0.1:9200",
+		esDestination.ConfigIndex:    "acceptance_idx",
+		esDestination.ConfigBulkSize: "100",
 	}
 
 	sdk.AcceptanceTest(t, &CustomConfigurableAcceptanceTestDriver{
@@ -90,7 +90,7 @@ func TestAcceptance(t *testing.T) {
 					if client := dest.GetClient(); client != nil {
 						assertIndexIsDeleted(
 							client.(*v7.Client).GetClient(),
-							destinationConfig[esDestination.ConfigKeyIndex],
+							destinationConfig[esDestination.ConfigIndex],
 						)
 					}
 				},
