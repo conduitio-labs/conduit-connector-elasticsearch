@@ -20,11 +20,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"testing"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	v8 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v8"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	esV8 "github.com/elastic/go-elasticsearch/v8"
 	"github.com/jaswdr/faker"
@@ -36,11 +38,11 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 	dest := destination.NewDestination().(*destination.Destination)
 
 	cfgRaw := map[string]string{
-		destination.ConfigKeyVersion:  elasticsearch.Version8,
-		destination.ConfigKeyHost:     "http://127.0.0.1:9200",
-		destination.ConfigKeyIndex:    "users",
-		destination.ConfigKeyType:     "user",
-		destination.ConfigKeyBulkSize: "1",
+		destination.ConfigVersion:  elasticsearch.Version8,
+		destination.ConfigHost:     "http://127.0.0.1:9200",
+		destination.ConfigIndex:    "users",
+		destination.ConfigType:     "user",
+		destination.ConfigBulkSize: "1",
 	}
 
 	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
@@ -73,20 +75,20 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be upserted", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
 						nil,
-						sdk.StructuredData(user1),
+						opencdc.StructuredData(user1),
 					),
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user2["id"])),
 						nil,
-						sdk.StructuredData(user2),
+						opencdc.StructuredData(user2),
 					),
 				})
 			require.NoError(t, err)
@@ -101,11 +103,12 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be deleted", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordDelete(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.StructuredData(user1),
 					),
 				})
 			require.NoError(t, err)
@@ -119,19 +122,19 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be created", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordCreate(
 						nil,
 						nil,
 						nil,
-						sdk.StructuredData(user1),
+						opencdc.StructuredData(user1),
 					),
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
 						nil,
 						nil,
-						sdk.StructuredData(user2),
+						opencdc.StructuredData(user2),
 					),
 				},
 			)
@@ -165,13 +168,13 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be upserted", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
 						nil,
-						sdk.RawData(fmt.Sprintf(
+						opencdc.RawData(fmt.Sprintf(
 							`{"id":%.f,"email":%q}`,
 							user1["id"],
 							user1["email"],
@@ -180,9 +183,9 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 					sdk.SourceUtil{}.NewRecordUpdate(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user2["id"])),
 						nil,
-						sdk.RawData(fmt.Sprintf(
+						opencdc.RawData(fmt.Sprintf(
 							`{"id":%.f,"email":%q}`,
 							user2["id"],
 							user2["email"],
@@ -202,11 +205,12 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be deleted", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordDelete(
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
+						opencdc.StructuredData(user1),
 					),
 				},
 			)
@@ -221,12 +225,12 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		t.Run("can be created", func(t *testing.T) {
 			n, err := dest.Write(
 				context.Background(),
-				[]sdk.Record{
+				[]opencdc.Record{
 					sdk.SourceUtil{}.NewRecordCreate(
 						nil,
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf(
+						opencdc.RawData(fmt.Sprintf(
 							`{"id":%.f,"email":%q}`,
 							user1["id"],
 							user1["email"],
@@ -237,7 +241,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 						nil,
 						nil,
 						nil,
-						sdk.RawData(fmt.Sprintf(
+						opencdc.RawData(fmt.Sprintf(
 							`{"id":%.f,"email":%q}`,
 							user2["id"],
 							user2["email"],
@@ -262,11 +266,11 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	dest := destination.NewDestination().(*destination.Destination)
 
 	cfgRaw := map[string]string{
-		destination.ConfigKeyVersion:  elasticsearch.Version8,
-		destination.ConfigKeyHost:     "http://127.0.0.1:9200",
-		destination.ConfigKeyIndex:    "users",
-		destination.ConfigKeyType:     "user",
-		destination.ConfigKeyBulkSize: "3",
+		destination.ConfigVersion:  elasticsearch.Version8,
+		destination.ConfigHost:     "http://127.0.0.1:9200",
+		destination.ConfigIndex:    "users",
+		destination.ConfigType:     "user",
+		destination.ConfigBulkSize: "3",
 	}
 
 	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
@@ -308,26 +312,26 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	t.Run("one create operation and two upsert operations", func(t *testing.T) {
 		n, err := dest.Write(
 			context.Background(),
-			[]sdk.Record{
+			[]opencdc.Record{
 				sdk.SourceUtil{}.NewRecordCreate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user1["id"])),
-					sdk.StructuredData(user1),
+					opencdc.RawData(fmt.Sprintf("%.0f", user1["id"])),
+					opencdc.StructuredData(user1),
 				),
 				sdk.SourceUtil{}.NewRecordUpdate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user2["id"])),
+					opencdc.RawData(fmt.Sprintf("%.0f", user2["id"])),
 					nil,
-					sdk.StructuredData(user2),
+					opencdc.StructuredData(user2),
 				),
 				sdk.SourceUtil{}.NewRecordUpdate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
+					opencdc.RawData(fmt.Sprintf("%.0f", user3["id"])),
 					nil,
-					sdk.StructuredData(user3),
+					opencdc.StructuredData(user3),
 				),
 			},
 		)
@@ -344,19 +348,19 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	t.Run("create new, update existing", func(t *testing.T) {
 		n, err := dest.Write(
 			context.Background(),
-			[]sdk.Record{
+			[]opencdc.Record{
 				sdk.SourceUtil{}.NewRecordUpdate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user4["id"])),
+					opencdc.RawData(fmt.Sprintf("%.0f", user4["id"])),
 					nil,
-					sdk.StructuredData(user4),
+					opencdc.StructuredData(user4),
 				),
 				sdk.SourceUtil{}.NewRecordCreate(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user5["id"])),
-					sdk.StructuredData(user5),
+					opencdc.RawData(fmt.Sprintf("%.0f", user5["id"])),
+					opencdc.StructuredData(user5),
 				),
 			},
 		)
@@ -375,11 +379,12 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	t.Run("writing 1 more record fills the buffer and performs actions", func(t *testing.T) {
 		n, err := dest.Write(
 			context.Background(),
-			[]sdk.Record{
+			[]opencdc.Record{
 				sdk.SourceUtil{}.NewRecordDelete(
 					nil,
 					nil,
-					sdk.RawData(fmt.Sprintf("%.0f", user3["id"])),
+					opencdc.RawData(fmt.Sprintf("%.0f", user3["id"])),
+					opencdc.StructuredData(user3),
 				),
 			},
 		)
@@ -411,9 +416,9 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV8.Client, documents
 		esClient.Indices.Refresh.WithIndex("users"),
 	)
 	if err != nil {
-		return fmt.Errorf("error refreshing index: %s", err)
+		return fmt.Errorf("error refreshing index: %w", err)
 	}
-	if refresh.StatusCode != 200 {
+	if refresh.StatusCode != http.StatusOK {
 		return fmt.Errorf(
 			"error refreshing index, status code %v, status %v",
 			refresh.StatusCode,
@@ -436,7 +441,7 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV8.Client, documents
 	}
 
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return fmt.Errorf("error encoding query: %s", err)
+		return fmt.Errorf("error encoding query: %w", err)
 	}
 
 	// Search
@@ -445,7 +450,7 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV8.Client, documents
 		esClient.Search.WithBody(&buf),
 	)
 	if err != nil {
-		return fmt.Errorf("error getting response: %s", err)
+		return fmt.Errorf("error getting response: %w", err)
 	}
 
 	defer response.Body.Close()
@@ -454,7 +459,7 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV8.Client, documents
 		var e map[string]interface{}
 
 		if err := json.NewDecoder(response.Body).Decode(&e); err != nil {
-			return fmt.Errorf("error parsing the response body: %s", err)
+			return fmt.Errorf("error parsing the response body: %w", err)
 		}
 
 		// Print the response status and error information.
@@ -468,7 +473,7 @@ func assertIndexContainsDocuments(t *testing.T, esClient *esV8.Client, documents
 	var r map[string]interface{}
 
 	if err := json.NewDecoder(response.Body).Decode(&r); err != nil {
-		return fmt.Errorf("error parsing the response body: %s", err)
+		return fmt.Errorf("error parsing the response body: %w", err)
 	}
 
 	hitsMetadata := r["hits"].(map[string]interface{})

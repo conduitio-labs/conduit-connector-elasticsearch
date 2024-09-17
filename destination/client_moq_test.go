@@ -5,7 +5,7 @@ package destination
 
 import (
 	"context"
-	sdk "github.com/conduitio/conduit-connector-sdk"
+	"github.com/conduitio/conduit-commons/opencdc"
 	"io"
 	"sync"
 )
@@ -16,31 +16,31 @@ var _ client = &clientMock{}
 
 // clientMock is a mock implementation of client.
 //
-// 	func TestSomethingThatUsesclient(t *testing.T) {
+//	func TestSomethingThatUsesclient(t *testing.T) {
 //
-// 		// make and configure a mocked client
-// 		mockedclient := &clientMock{
-// 			BulkFunc: func(ctx context.Context, reader io.Reader) (io.ReadCloser, error) {
-// 				panic("mock out the Bulk method")
-// 			},
-// 			PingFunc: func(ctx context.Context) error {
-// 				panic("mock out the Ping method")
-// 			},
-// 			PrepareCreateOperationFunc: func(item sdk.Record) (interface{}, interface{}, error) {
-// 				panic("mock out the PrepareCreateOperation method")
-// 			},
-// 			PrepareDeleteOperationFunc: func(key string) (interface{}, error) {
-// 				panic("mock out the PrepareDeleteOperation method")
-// 			},
-// 			PrepareUpsertOperationFunc: func(key string, item sdk.Record) (interface{}, interface{}, error) {
-// 				panic("mock out the PrepareUpsertOperation method")
-// 			},
-// 		}
+//		// make and configure a mocked client
+//		mockedclient := &clientMock{
+//			BulkFunc: func(ctx context.Context, reader io.Reader) (io.ReadCloser, error) {
+//				panic("mock out the Bulk method")
+//			},
+//			PingFunc: func(ctx context.Context) error {
+//				panic("mock out the Ping method")
+//			},
+//			PrepareCreateOperationFunc: func(item opencdc.Record) (interface{}, interface{}, error) {
+//				panic("mock out the PrepareCreateOperation method")
+//			},
+//			PrepareDeleteOperationFunc: func(key string) (interface{}, error) {
+//				panic("mock out the PrepareDeleteOperation method")
+//			},
+//			PrepareUpsertOperationFunc: func(key string, item opencdc.Record) (interface{}, interface{}, error) {
+//				panic("mock out the PrepareUpsertOperation method")
+//			},
+//		}
 //
-// 		// use mockedclient in code that requires client
-// 		// and then make assertions.
+//		// use mockedclient in code that requires client
+//		// and then make assertions.
 //
-// 	}
+//	}
 type clientMock struct {
 	// BulkFunc mocks the Bulk method.
 	BulkFunc func(ctx context.Context, reader io.Reader) (io.ReadCloser, error)
@@ -49,13 +49,13 @@ type clientMock struct {
 	PingFunc func(ctx context.Context) error
 
 	// PrepareCreateOperationFunc mocks the PrepareCreateOperation method.
-	PrepareCreateOperationFunc func(item sdk.Record) (interface{}, interface{}, error)
+	PrepareCreateOperationFunc func(item opencdc.Record) (interface{}, interface{}, error)
 
 	// PrepareDeleteOperationFunc mocks the PrepareDeleteOperation method.
 	PrepareDeleteOperationFunc func(key string) (interface{}, error)
 
 	// PrepareUpsertOperationFunc mocks the PrepareUpsertOperation method.
-	PrepareUpsertOperationFunc func(key string, item sdk.Record) (interface{}, interface{}, error)
+	PrepareUpsertOperationFunc func(key string, item opencdc.Record) (interface{}, interface{}, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -74,7 +74,7 @@ type clientMock struct {
 		// PrepareCreateOperation holds details about calls to the PrepareCreateOperation method.
 		PrepareCreateOperation []struct {
 			// Item is the item argument value.
-			Item sdk.Record
+			Item opencdc.Record
 		}
 		// PrepareDeleteOperation holds details about calls to the PrepareDeleteOperation method.
 		PrepareDeleteOperation []struct {
@@ -86,7 +86,7 @@ type clientMock struct {
 			// Key is the key argument value.
 			Key string
 			// Item is the item argument value.
-			Item sdk.Record
+			Item opencdc.Record
 		}
 	}
 	lockBulk                   sync.RWMutex
@@ -116,7 +116,8 @@ func (mock *clientMock) Bulk(ctx context.Context, reader io.Reader) (io.ReadClos
 
 // BulkCalls gets all the calls that were made to Bulk.
 // Check the length with:
-//     len(mockedclient.BulkCalls())
+//
+//	len(mockedclient.BulkCalls())
 func (mock *clientMock) BulkCalls() []struct {
 	Ctx    context.Context
 	Reader io.Reader
@@ -149,7 +150,8 @@ func (mock *clientMock) Ping(ctx context.Context) error {
 
 // PingCalls gets all the calls that were made to Ping.
 // Check the length with:
-//     len(mockedclient.PingCalls())
+//
+//	len(mockedclient.PingCalls())
 func (mock *clientMock) PingCalls() []struct {
 	Ctx context.Context
 } {
@@ -163,12 +165,12 @@ func (mock *clientMock) PingCalls() []struct {
 }
 
 // PrepareCreateOperation calls PrepareCreateOperationFunc.
-func (mock *clientMock) PrepareCreateOperation(item sdk.Record) (interface{}, interface{}, error) {
+func (mock *clientMock) PrepareCreateOperation(item opencdc.Record) (interface{}, interface{}, error) {
 	if mock.PrepareCreateOperationFunc == nil {
 		panic("clientMock.PrepareCreateOperationFunc: method is nil but client.PrepareCreateOperation was just called")
 	}
 	callInfo := struct {
-		Item sdk.Record
+		Item opencdc.Record
 	}{
 		Item: item,
 	}
@@ -180,12 +182,13 @@ func (mock *clientMock) PrepareCreateOperation(item sdk.Record) (interface{}, in
 
 // PrepareCreateOperationCalls gets all the calls that were made to PrepareCreateOperation.
 // Check the length with:
-//     len(mockedclient.PrepareCreateOperationCalls())
+//
+//	len(mockedclient.PrepareCreateOperationCalls())
 func (mock *clientMock) PrepareCreateOperationCalls() []struct {
-	Item sdk.Record
+	Item opencdc.Record
 } {
 	var calls []struct {
-		Item sdk.Record
+		Item opencdc.Record
 	}
 	mock.lockPrepareCreateOperation.RLock()
 	calls = mock.calls.PrepareCreateOperation
@@ -211,7 +214,8 @@ func (mock *clientMock) PrepareDeleteOperation(key string) (interface{}, error) 
 
 // PrepareDeleteOperationCalls gets all the calls that were made to PrepareDeleteOperation.
 // Check the length with:
-//     len(mockedclient.PrepareDeleteOperationCalls())
+//
+//	len(mockedclient.PrepareDeleteOperationCalls())
 func (mock *clientMock) PrepareDeleteOperationCalls() []struct {
 	Key string
 } {
@@ -225,13 +229,13 @@ func (mock *clientMock) PrepareDeleteOperationCalls() []struct {
 }
 
 // PrepareUpsertOperation calls PrepareUpsertOperationFunc.
-func (mock *clientMock) PrepareUpsertOperation(key string, item sdk.Record) (interface{}, interface{}, error) {
+func (mock *clientMock) PrepareUpsertOperation(key string, item opencdc.Record) (interface{}, interface{}, error) {
 	if mock.PrepareUpsertOperationFunc == nil {
 		panic("clientMock.PrepareUpsertOperationFunc: method is nil but client.PrepareUpsertOperation was just called")
 	}
 	callInfo := struct {
 		Key  string
-		Item sdk.Record
+		Item opencdc.Record
 	}{
 		Key:  key,
 		Item: item,
@@ -244,14 +248,15 @@ func (mock *clientMock) PrepareUpsertOperation(key string, item sdk.Record) (int
 
 // PrepareUpsertOperationCalls gets all the calls that were made to PrepareUpsertOperation.
 // Check the length with:
-//     len(mockedclient.PrepareUpsertOperationCalls())
+//
+//	len(mockedclient.PrepareUpsertOperationCalls())
 func (mock *clientMock) PrepareUpsertOperationCalls() []struct {
 	Key  string
-	Item sdk.Record
+	Item opencdc.Record
 } {
 	var calls []struct {
 		Key  string
-		Item sdk.Record
+		Item opencdc.Record
 	}
 	mock.lockPrepareUpsertOperation.RLock()
 	calls = mock.calls.PrepareUpsertOperation

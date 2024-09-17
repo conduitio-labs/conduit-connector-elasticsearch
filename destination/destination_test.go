@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/require"
@@ -71,11 +72,11 @@ func TestDestination_Write(t *testing.T) {
 		)
 
 		esClientMock := clientMock{
-			PrepareCreateOperationFunc: func(item sdk.Record) (interface{}, interface{}, error) {
+			PrepareCreateOperationFunc: func(_ opencdc.Record) (interface{}, interface{}, error) {
 				return operationMetadata, operationPayload, nil
 			},
 
-			BulkFunc: func(ctx context.Context, reader io.Reader) (io.ReadCloser, error) {
+			BulkFunc: func(_ context.Context, reader io.Reader) (io.ReadCloser, error) {
 				bulkRequest, err := io.ReadAll(reader)
 				require.NoError(t, err)
 				require.Equal(t, fmt.Sprintf("%q\n%q\n", operationMetadata, operationPayload), string(bulkRequest))
@@ -107,12 +108,12 @@ func TestDestination_Write(t *testing.T) {
 
 		n, err := destination.Write(
 			context.Background(),
-			[]sdk.Record{
+			[]opencdc.Record{
 				sdk.SourceUtil{}.NewRecordCreate(
 					nil,
 					nil,
 					nil,
-					sdk.StructuredData{
+					opencdc.StructuredData{
 						"id": fakerInstance.Int32(),
 					},
 				),
