@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"io"
 
-	sdk "github.com/conduitio/conduit-connector-sdk"
+	"github.com/conduitio/conduit-commons/opencdc"
 	"github.com/elastic/go-elasticsearch/v5"
 )
 
@@ -94,7 +94,7 @@ func (c *Client) Bulk(ctx context.Context, reader io.Reader) (io.ReadCloser, err
 	return result.Body, nil
 }
 
-func (c *Client) PrepareCreateOperation(item sdk.Record) (interface{}, interface{}, error) {
+func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, interface{}, error) {
 	// Prepare metadata
 	metadata := bulkRequestActionAndMetadata{
 		Index: &bulkRequestIndexAction{
@@ -112,7 +112,7 @@ func (c *Client) PrepareCreateOperation(item sdk.Record) (interface{}, interface
 	return metadata, bulkRequestCreateSource(payload), nil
 }
 
-func (c *Client) PrepareUpsertOperation(key string, item sdk.Record) (interface{}, interface{}, error) {
+func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interface{}, interface{}, error) {
 	// Prepare metadata
 	metadata := bulkRequestActionAndMetadata{
 		Update: &bulkRequestUpdateAction{
@@ -149,9 +149,9 @@ func (c *Client) PrepareDeleteOperation(key string) (interface{}, error) {
 }
 
 // preparePayload encodes Record's payload as JSON.
-func preparePayload(item *sdk.Record) (json.RawMessage, error) {
+func preparePayload(item *opencdc.Record) (json.RawMessage, error) {
 	switch itemPayload := item.Payload.After.(type) {
-	case sdk.StructuredData:
+	case opencdc.StructuredData:
 		return json.Marshal(itemPayload)
 
 	default:

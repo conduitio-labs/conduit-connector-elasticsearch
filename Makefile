@@ -34,11 +34,22 @@ test:
 	  	docker compose -f test/docker-compose.v8.yml -p test-v8 down; \
 	  	if [ $$ret -ne 0 ]; then exit $$ret; fi
 
-lint:
-	golangci-lint run -v
 
 .PHONY: install-tools
 install-tools:
 	@echo Installing tools from tools.go
-	@go list -e -f '{{ join .Imports "\n" }}' tools.go | xargs -tI % go install %
+	@go list -e -f '{{ join .Imports "\n" }}' tools.go | xargs -I % go list -f "%@{{.Module.Version}}" % | xargs -tI % go install %
 	@go mod tidy
+
+.PHONY: generate
+generate:
+	go generate ./...
+
+.PHONY: fmt
+fmt:
+	gofumpt -l -w .
+
+.PHONY: lint
+lint:
+	golangci-lint run -v
+	

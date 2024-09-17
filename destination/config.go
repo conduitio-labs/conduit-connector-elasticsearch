@@ -12,44 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate paramgen -output=paramgen.go Config
+
 package destination
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 )
 
-const (
-	ConfigKeyVersion                = "version"
-	ConfigKeyHost                   = "host"
-	ConfigKeyUsername               = "username"
-	ConfigKeyPassword               = "password"
-	ConfigKeyCloudID                = "cloudId"
-	ConfigKeyAPIKey                 = "apiKey"
-	ConfigKeyServiceToken           = "serviceToken"
-	ConfigKeyCertificateFingerprint = "certificateFingerprint"
-	ConfigKeyIndex                  = "index"
-	ConfigKeyType                   = "type"
-	ConfigKeyBulkSize               = "bulkSize"
-	ConfigKeyRetries                = "retries"
-)
-
 type Config struct {
-	Version                elasticsearch.Version
-	Host                   string
-	Username               string
-	Password               string
-	CloudID                string
-	APIKey                 string
-	ServiceToken           string
-	CertificateFingerprint string
-	Index                  string
-	Type                   string
-	BulkSize               uint64
-	Retries                uint8
+	// The version of the Elasticsearch service. One of: 5, 6, 7, 8.
+	Version elasticsearch.Version `json:"version" validate:"required"`
+	// The Elasticsearch host and port (e.g.: http://127.0.0.1:9200).
+	Host string `json:"host" validate:"required"`
+	// The username for HTTP Basic Authentication.
+	Username string `json:"username"`
+	// The password for HTTP Basic Authentication.
+	Password string `json:"password"`
+	// Endpoint for the Elastic Service (https://elastic.co/cloud).
+	CloudID string `json:"cloudID"`
+	// Base64-encoded token for authorization; if set, overrides username/password and service token.
+	APIKey string `json:"APIKey"`
+	// Service token for authorization; if set, overrides username/password.
+	ServiceToken string `json:"serviceToken"`
+	// SHA256 hex fingerprint given by Elasticsearch on first launch.
+	CertificateFingerprint string `json:"certificateFingerprint"`
+	// The name of the index to write the data to.
+	Index string `json:"index"`
+	// The name of the index's type to write the data to.
+	Type string `json:"type"`
+	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.
+	BulkSize uint64 `json:"bulkSize" default:"1000"`
+	// The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255.
+	Retries uint8 `json:"retries" default:"0"`
 }
 
 func (c Config) GetHost() string {
@@ -86,105 +81,4 @@ func (c Config) GetIndex() string {
 
 func (c Config) GetType() string {
 	return c.Type
-}
-
-func ParseConfig(cfgRaw map[string]string) (_ Config, err error) {
-	cfg := Config{
-		Version:                cfgRaw[ConfigKeyVersion],
-		Host:                   cfgRaw[ConfigKeyHost],
-		Username:               cfgRaw[ConfigKeyUsername],
-		Password:               cfgRaw[ConfigKeyPassword],
-		CloudID:                cfgRaw[ConfigKeyCloudID],
-		APIKey:                 cfgRaw[ConfigKeyAPIKey],
-		ServiceToken:           cfgRaw[ConfigKeyServiceToken],
-		CertificateFingerprint: cfgRaw[ConfigKeyCertificateFingerprint],
-		Index:                  cfgRaw[ConfigKeyIndex],
-		Type:                   cfgRaw[ConfigKeyType],
-	}
-
-	if cfg.Version == "" {
-		return Config{}, requiredConfigErr(ConfigKeyVersion)
-	}
-	if cfg.Version != elasticsearch.Version5 &&
-		cfg.Version != elasticsearch.Version6 &&
-		cfg.Version != elasticsearch.Version7 &&
-		cfg.Version != elasticsearch.Version8 {
-		return Config{}, fmt.Errorf(
-			"%q config value must be one of [%s], %s provided",
-			ConfigKeyVersion,
-			strings.Join([]elasticsearch.Version{
-				elasticsearch.Version5,
-				elasticsearch.Version6,
-				elasticsearch.Version7,
-				elasticsearch.Version8,
-			}, ", "),
-			cfg.Version,
-		)
-	}
-
-	if cfg.Host == "" {
-		return Config{}, requiredConfigErr(ConfigKeyHost)
-	}
-
-	if cfg.Username == "" && cfg.Password != "" {
-		return Config{}, fmt.Errorf("%q config value must be set when %q is provided", ConfigKeyUsername, ConfigKeyPassword)
-	}
-
-	if cfg.Index == "" {
-		return Config{}, requiredConfigErr(ConfigKeyIndex)
-	}
-
-	if (cfg.Version == elasticsearch.Version5 || cfg.Version == elasticsearch.Version6) && cfg.Type == "" {
-		return Config{}, requiredConfigErr(ConfigKeyType)
-	}
-
-	// Bulk size
-	if cfg.BulkSize, err = parseBulkSizeConfigValue(cfgRaw); err != nil {
-		return Config{}, err
-	}
-
-	// Retries
-	if cfg.Retries, err = parseRetriesConfigValue(cfgRaw); err != nil {
-		return Config{}, err
-	}
-
-	return cfg, nil
-}
-
-func requiredConfigErr(name string) error {
-	return fmt.Errorf("%q config value must be set", name)
-}
-
-func parseBulkSizeConfigValue(cfgRaw map[string]string) (uint64, error) {
-	bulkSize, ok := cfgRaw[ConfigKeyBulkSize]
-	if !ok {
-		return 0, requiredConfigErr(ConfigKeyBulkSize)
-	}
-
-	bulkSizeParsed, err := strconv.ParseUint(bulkSize, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse %q config value: %w", ConfigKeyBulkSize, err)
-	}
-	if bulkSizeParsed <= 0 {
-		return 0, fmt.Errorf("failed to parse %q config value: value must be greater than 0", ConfigKeyBulkSize)
-	}
-	if bulkSizeParsed > 10_000 {
-		return 0, fmt.Errorf("failed to parse %q config value: value must not be grater than 10 000", ConfigKeyBulkSize)
-	}
-
-	return bulkSizeParsed, nil
-}
-
-func parseRetriesConfigValue(cfgRaw map[string]string) (uint8, error) {
-	retries, ok := cfgRaw[ConfigKeyRetries]
-	if !ok || retries == "" {
-		return 0, nil
-	}
-
-	retriesParsed, err := strconv.ParseUint(retries, 10, 8)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse %q config value: %w", ConfigKeyRetries, err)
-	}
-
-	return uint8(retriesParsed), nil
 }

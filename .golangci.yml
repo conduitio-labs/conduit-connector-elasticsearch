@@ -1,19 +1,24 @@
 run:
-  go: '1.17' # https://github.com/golangci/golangci-lint/issues/2649
+  timeout: 5m 
 
 linters-settings:
-  gofmt:
-    simplify: false
-  govet:
-    check-shadowing: false
   nolintlint:
     allow-unused: false # report any unused nolint directives
     require-explanation: true # require an explanation for nolint directives
-    require-specific: true # require nolint directives to mention the specific linter being suppressed
-  gocyclo:
-    min-complexity: 20
-  goconst:
+    require-specific: true # require nolint directives to mention the specific linter being suppressedgoconst:
     ignore-tests: true
+  wrapcheck:
+    ignoreSigs:
+      - .Errorf(
+      - errors.New(
+      - errors.Unwrap(
+      - errors.Join(
+      - .Wrap(
+      - .Wrapf(
+      - .WithMessage(
+      - .WithMessagef(
+      - .WithStack(
+      - (context.Context).Err()
   goheader:
     template-path: '.golangci.goheader.template'
     values:
@@ -26,30 +31,41 @@ linters:
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
   enable:
+    - asasalint
+    - asciicheck
+    - bidichk
     - bodyclose
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - decorder
     # - depguard
     - dogsled
+    - dupl
+    - dupword
     - durationcheck
     - errcheck
+    - errchkjson
     - errname
-    # - errorlint
-    # - exhaustive
+    - errorlint
+    - exhaustive
     # - exhaustivestruct
     - exportloopref
     # - forbidigo
     # - forcetypeassert
-    # - funlen
-    # - gochecknoinits
+    - gochecknoinits
     - goconst
     - gocritic
-    - gocyclo
-    # - cyclop # not interested in package complexities at the moment
-    # - godot
+    - godot
     - gofmt
-    # - gofumpt
+    - gofumpt
     - goheader
     - goimports
     - revive
+    - gocheckcompilerdirectives
+    - gocognit
+    - grouper
+    - interfacebloat
     # - gomnd
     - gomoddirectives
     - gomodguard
@@ -59,13 +75,11 @@ linters:
     - govet
     # - ifshort
     - ineffassign
-    # - importas
-    # - lll
-    # - misspell
-    - makezero
-    # - nakedret
-    # - nilerr
-    # - nilnil
+    - importas
+    # - lllmisspell
+    - nakedret
+    - nilerr
+    - nilnil
     # - nlreturn
     - noctx
     - nolintlint
@@ -76,27 +90,25 @@ linters:
     - stylecheck
     - sqlclosecheck
     # - tagliatelle
-    # - tenv
+    - tenv
     # - thelper
     # - tparallel
+    - mirror
+    - musttag
+    - nestif
     - typecheck
     - unconvert
-    # - unparam
+    - unparam
     - unused
     - wastedassign
     - whitespace
-  # - wrapcheck
-  # - wsl
-
-  # don't enable:
-  # - asciicheck
-  # - dupl
-  # - gochecknoglobals
-  # - gocognit
-  # - godox
-  # - goerr113
-  # - maligned
-  # - nestif
-  # - prealloc
-  # - testpackage
-  # - wsl
+    - loggercheck
+    - maintidx
+    - nosprintfhostport
+    - prealloc
+    - promlinter
+    - reassign
+    - testableexamples
+    - unconvert
+    - usestdlibvars
+    - zerologlint

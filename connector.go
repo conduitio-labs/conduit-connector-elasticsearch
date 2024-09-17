@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package elasticsearch
 
 import (
-	elasticsearch "github.com/conduitio-labs/conduit-connector-elasticsearch"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
-func main() {
-	sdk.Serve(elasticsearch.Connector)
+var Connector = sdk.Connector{
+	NewSpecification: Specification,
+	NewSource:        nil,
+	NewDestination:   destination.NewDestination,
 }
