@@ -58,4 +58,4 @@ docker-compose -f test/docker-compose.v8.overrides.yml -f test/docker-compose.v8
 - https://github.com/elastic/go-elasticsearch
 - https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-bulk.html
 
-![scarf pixel](https://static.scarf.sh/a.png?x-pxid=1423de19-24e7-4d64-91cf-0b893ca28as7)
+![scarf pixel](https://static.scarf.sh/a.png?x-pxid=715ebf4a-148c-44ad-8f64-6cc5780d34ae)
