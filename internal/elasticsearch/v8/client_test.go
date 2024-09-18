@@ -25,10 +25,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const indexName = "someIndexName"
+
 func TestNewClient(t *testing.T) {
 	t.Run("Fails when provided config object is invalid", func(t *testing.T) {
 		client, err := NewClient("invalid config object", func(opencdc.Record) (string, error) {
-			return "someIndexName", nil
+			return indexName, nil
 		})
 
 		require.Nil(t, client)
@@ -50,7 +52,7 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 	t.Run("Fails when payload could not be prepared", func(t *testing.T) {
 		client := Client{
 			indexFn: func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			},
 		}
 
@@ -92,7 +94,7 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 	t.Run("Successfully prepares create operation", func(t *testing.T) {
 		client := Client{
 			indexFn: func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			},
 		}
 
@@ -111,7 +113,7 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 
 		expectedMetadata := bulkRequestActionAndMetadata{
 			Create: &bulkRequestCreateAction{
-				Index: "someIndexName",
+				Index: indexName,
 			},
 		}
 
@@ -126,7 +128,7 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 	t.Run("Fails when payload could not be prepared", func(t *testing.T) {
 		client := Client{
 			indexFn: func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			},
 		}
 
@@ -180,7 +182,7 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 	t.Run("Successfully prepares upsert operation", func(t *testing.T) {
 		client := Client{
 			indexFn: func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			},
 		}
 
@@ -206,7 +208,7 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 		expectedMetadata := bulkRequestActionAndMetadata{
 			Update: &bulkRequestUpdateAction{
 				ID:              "key",
-				Index:           "someIndexName",
+				Index:           indexName,
 				RetryOnConflict: 3,
 			},
 		}
@@ -241,7 +243,7 @@ func TestClient_PrepareDeleteOperation(t *testing.T) {
 	t.Run("Successfully prepares delete operation", func(t *testing.T) {
 		client := Client{
 			indexFn: func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			},
 		}
 
@@ -256,7 +258,7 @@ func TestClient_PrepareDeleteOperation(t *testing.T) {
 		expectedMetadata := bulkRequestActionAndMetadata{
 			Delete: &bulkRequestDeleteAction{
 				ID:    "key",
-				Index: "someIndexName",
+				Index: indexName,
 			},
 		}
 

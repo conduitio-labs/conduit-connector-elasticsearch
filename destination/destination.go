@@ -237,7 +237,7 @@ func (d *Destination) writeUpsertOperation(key string, data *bytes.Buffer, item 
 	return nil
 }
 
-// writeDeleteOperation adds delete a Document by ID request into Bulk API request
+// writeDeleteOperation adds delete a Document by ID request into Bulk API request.
 func (d *Destination) writeDeleteOperation(key string, data *bytes.Buffer, record opencdc.Record) error {
 	jsonEncoder := json.NewEncoder(data)
 

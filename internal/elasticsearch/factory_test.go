@@ -27,6 +27,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const indexName = "someIndexName"
+
 func TestNewClient(t *testing.T) {
 	fakerInstance := faker.New()
 
@@ -37,7 +39,7 @@ func TestNewClient(t *testing.T) {
 			}
 			version = fakerInstance.Lorem().Sentence(3)
 			indexFn = func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			}
 		)
 
@@ -53,7 +55,7 @@ func TestNewClient(t *testing.T) {
 			}
 			clientMock = new(v5.Client)
 			indexFn    = func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			}
 		)
 
@@ -76,7 +78,7 @@ func TestNewClient(t *testing.T) {
 			}
 			clientMock = new(v6.Client)
 			indexFn    = func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			}
 		)
 
@@ -99,7 +101,7 @@ func TestNewClient(t *testing.T) {
 			}
 			clientMock = new(v7.Client)
 			indexFn    = func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			}
 		)
 
@@ -122,14 +124,14 @@ func TestNewClient(t *testing.T) {
 			}
 			clientMock    = new(v8.Client)
 			indexFunction = func(opencdc.Record) (string, error) {
-				return "someIndexName", nil
+				return indexName, nil
 			}
 		)
 
 		v8ClientBuilder = func(cfg interface{}, indexFn func(opencdc.Record) (string, error)) (*v8.Client, error) {
 			require.Equal(t, config, cfg)
-			
-			record := opencdc.Record{} 
+
+			record := opencdc.Record{}
 			expectedIndex, err1 := indexFunction(record)
 			actualIndex, err2 := indexFn(record)
 			require.Equal(t, expectedIndex, actualIndex)
