@@ -25,7 +25,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
-func NewClient(cfg interface{}) (*Client, error) {
+func NewClient(cfg interface{}, indexFn func(opencdc.Record) (string, error)) (*Client, error) {
 	configTyped, ok := cfg.(config)
 	if !ok {
 		return nil, errors.New("provided config object is invalid")
@@ -45,14 +45,16 @@ func NewClient(cfg interface{}) (*Client, error) {
 	}
 
 	return &Client{
-		es:  esClient,
-		cfg: configTyped,
+		es:      esClient,
+		cfg:     configTyped,
+		indexFn: indexFn,
 	}, nil
 }
 
 type Client struct {
-	es  *elasticsearch.Client
-	cfg config
+	es      *elasticsearch.Client
+	cfg     config
+	indexFn func(opencdc.Record) (string, error)
 }
 
 // GetClient returns Elasticsearch v8 client.
@@ -99,10 +101,16 @@ func (c *Client) Bulk(ctx context.Context, reader io.Reader) (io.ReadCloser, err
 }
 
 func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, interface{}, error) {
+	// Determine the index name
+	indexName, err := c.indexFn(item)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to determine index name: %w", err)
+	}
+
 	// Prepare metadata
 	metadata := bulkRequestActionAndMetadata{
 		Create: &bulkRequestCreateAction{
-			Index: c.cfg.GetIndex(),
+			Index: indexName,
 		},
 	}
 
@@ -116,18 +124,22 @@ func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, inter
 }
 
 func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interface{}, interface{}, error) {
+	// Determine the index name
+	indexName, err := c.indexFn(item)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to determine index name: %w", err)
+	}
+
 	// Prepare metadata
 	metadata := bulkRequestActionAndMetadata{
 		Update: &bulkRequestUpdateAction{
 			ID:              key,
-			Index:           c.cfg.GetIndex(),
+			Index:           indexName,
 			RetryOnConflict: 3,
 		},
 	}
 
 	// Prepare payload
-	var err error
-
 	payload := bulkRequestOptionalSource{
 		Doc:         nil,
 		DocAsUpsert: true,
@@ -141,11 +153,17 @@ func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interf
 	return metadata, payload, nil
 }
 
-func (c *Client) PrepareDeleteOperation(key string) (interface{}, error) {
+func (c *Client) PrepareDeleteOperation(key string, item opencdc.Record) (interface{}, error) {
+	// Determine the index name
+	indexName, err := c.indexFn(item)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine index name: %w", err)
+	}
+
 	return bulkRequestActionAndMetadata{
 		Delete: &bulkRequestDeleteAction{
 			ID:    key,
-			Index: c.cfg.GetIndex(),
+			Index: indexName,
 		},
 	}, nil
 }

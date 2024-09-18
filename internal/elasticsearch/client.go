@@ -38,5 +38,5 @@ type Client interface {
 	PrepareUpsertOperation(key string, item opencdc.Record) (metadata interface{}, payload interface{}, err error)
 
 	// PrepareDeleteOperation prepares delete operation definition for Bulk API query.
-	PrepareDeleteOperation(key string) (metadata interface{}, err error)
+	PrepareDeleteOperation(key string, item opencdc.Record) (metadata interface{}, err error)
 }

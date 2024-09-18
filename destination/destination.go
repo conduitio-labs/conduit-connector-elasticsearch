@@ -59,8 +59,13 @@ func (d *Destination) Configure(ctx context.Context, cfg config.Config) (err err
 }
 
 func (d *Destination) Open(ctx context.Context) (err error) {
+	indexFn, err := d.config.IndexFunction()
+	if err != nil {
+		return fmt.Errorf("invalid index name or index function: %w", err)
+	}
+
 	// Initialize Elasticsearch client
-	d.client, err = elasticsearch.NewClient(d.config.Version, d.config)
+	d.client, err = elasticsearch.NewClient(d.config.Version, d.config, indexFn)
 	if err != nil {
 		return fmt.Errorf("failed creating client: %w", err)
 	}
@@ -174,7 +179,7 @@ func (d *Destination) prepareBulkRequestPayload(records []opencdc.Record) (*byte
 			}
 
 		case op == opencdc.OperationDelete:
-			if err := d.writeDeleteOperation(key, data); err != nil {
+			if err := d.writeDeleteOperation(key, data, record); err != nil {
 				return nil, err
 			}
 
@@ -232,12 +237,12 @@ func (d *Destination) writeUpsertOperation(key string, data *bytes.Buffer, item 
 	return nil
 }
 
-// writeDeleteOperation adds delete a Document by ID request into Bulk API request.
-func (d *Destination) writeDeleteOperation(key string, data *bytes.Buffer) error {
+// writeDeleteOperation adds delete a Document by ID request into Bulk API request
+func (d *Destination) writeDeleteOperation(key string, data *bytes.Buffer, record opencdc.Record) error {
 	jsonEncoder := json.NewEncoder(data)
 
 	// Prepare data
-	metadata, err := d.client.PrepareDeleteOperation(key)
+	metadata, err := d.client.PrepareDeleteOperation(key, record)
 	if err != nil {
 		return fmt.Errorf("failed to prepare metadata with key=%s: %w", key, err)
 	}

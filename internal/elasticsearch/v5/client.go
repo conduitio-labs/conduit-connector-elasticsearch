@@ -138,7 +138,7 @@ func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interf
 	return metadata, payload, nil
 }
 
-func (c *Client) PrepareDeleteOperation(key string) (interface{}, error) {
+func (c *Client) PrepareDeleteOperation(key string, item opencdc.Record) (interface{}, error) {
 	return bulkRequestActionAndMetadata{
 		Delete: &bulkRequestDeleteAction{
 			ID:    key,

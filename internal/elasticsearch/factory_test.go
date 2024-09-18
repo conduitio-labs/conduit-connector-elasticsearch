@@ -22,6 +22,7 @@ import (
 	v6 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v6"
 	v7 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v7"
 	v8 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v8"
+	"github.com/conduitio/conduit-commons/opencdc"
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/require"
 )
@@ -35,9 +36,12 @@ func TestNewClient(t *testing.T) {
 				fakerInstance.Lorem().Word(): fakerInstance.Int(),
 			}
 			version = fakerInstance.Lorem().Sentence(3)
+			indexFn = func(opencdc.Record) (string, error) {
+				return "someIndexName", nil
+			}
 		)
 
-		_, err := NewClient(version, config)
+		_, err := NewClient(version, config, indexFn)
 
 		require.EqualError(t, err, fmt.Sprintf("unsupported version: %s", version))
 	})
@@ -48,6 +52,9 @@ func TestNewClient(t *testing.T) {
 				fakerInstance.Lorem().Word(): fakerInstance.Int(),
 			}
 			clientMock = new(v5.Client)
+			indexFn    = func(opencdc.Record) (string, error) {
+				return "someIndexName", nil
+			}
 		)
 
 		v5ClientBuilder = func(cfg interface{}) (*v5.Client, error) {
@@ -56,7 +63,7 @@ func TestNewClient(t *testing.T) {
 			return clientMock, nil
 		}
 
-		client, err := NewClient(Version5, config)
+		client, err := NewClient(Version5, config, indexFn)
 
 		require.NoError(t, err)
 		require.Same(t, clientMock, client)
@@ -68,6 +75,9 @@ func TestNewClient(t *testing.T) {
 				fakerInstance.Lorem().Word(): fakerInstance.Int(),
 			}
 			clientMock = new(v6.Client)
+			indexFn    = func(opencdc.Record) (string, error) {
+				return "someIndexName", nil
+			}
 		)
 
 		v6ClientBuilder = func(cfg interface{}) (*v6.Client, error) {
@@ -76,7 +86,7 @@ func TestNewClient(t *testing.T) {
 			return clientMock, nil
 		}
 
-		client, err := NewClient(Version6, config)
+		client, err := NewClient(Version6, config, indexFn)
 
 		require.NoError(t, err)
 		require.Same(t, clientMock, client)
@@ -88,6 +98,9 @@ func TestNewClient(t *testing.T) {
 				fakerInstance.Lorem().Word(): fakerInstance.Int(),
 			}
 			clientMock = new(v7.Client)
+			indexFn    = func(opencdc.Record) (string, error) {
+				return "someIndexName", nil
+			}
 		)
 
 		v7ClientBuilder = func(cfg interface{}) (*v7.Client, error) {
@@ -96,7 +109,7 @@ func TestNewClient(t *testing.T) {
 			return clientMock, nil
 		}
 
-		client, err := NewClient(Version7, config)
+		client, err := NewClient(Version7, config, indexFn)
 
 		require.NoError(t, err)
 		require.Same(t, clientMock, client)
@@ -107,16 +120,25 @@ func TestNewClient(t *testing.T) {
 			config = map[string]interface{}{
 				fakerInstance.Lorem().Word(): fakerInstance.Int(),
 			}
-			clientMock = new(v8.Client)
+			clientMock    = new(v8.Client)
+			indexFunction = func(opencdc.Record) (string, error) {
+				return "someIndexName", nil
+			}
 		)
 
-		v8ClientBuilder = func(cfg interface{}) (*v8.Client, error) {
+		v8ClientBuilder = func(cfg interface{}, indexFn func(opencdc.Record) (string, error)) (*v8.Client, error) {
 			require.Equal(t, config, cfg)
+			
+			record := opencdc.Record{} 
+			expectedIndex, err1 := indexFunction(record)
+			actualIndex, err2 := indexFn(record)
+			require.Equal(t, expectedIndex, actualIndex)
+			require.Equal(t, err1, err2)
 
 			return clientMock, nil
 		}
 
-		client, err := NewClient(Version8, config)
+		client, err := NewClient(Version8, config, indexFunction)
 
 		require.NoError(t, err)
 		require.Same(t, clientMock, client)
