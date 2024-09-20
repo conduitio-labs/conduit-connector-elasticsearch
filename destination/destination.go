@@ -119,15 +119,16 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 			continue
 		}
 
-		if itemResponse.Status >= 200 && itemResponse.Status < 300 {
+		if (itemResponse.Status >= 200 && itemResponse.Status < 300) || itemResponse.Status == 404 {
 			continue
 		}
 
 		if itemResponse.Error == nil {
 			return n + 1, fmt.Errorf(
-				"item with key=%s %s failure: unknown error",
+				"item with key=%s %s failure: unknown error status: %d",
 				itemResponse.ID,
 				operationType,
+				itemResponse.Status,
 			)
 		}
 
@@ -174,7 +175,7 @@ func (d *Destination) prepareBulkRequestPayload(records []opencdc.Record) (*byte
 			}
 
 		case op == opencdc.OperationDelete:
-			if err := d.writeDeleteOperation(key, data); err != nil {
+			if err := d.writeDeleteOperation(key, data, record); err != nil {
 				return nil, err
 			}
 
@@ -233,11 +234,11 @@ func (d *Destination) writeUpsertOperation(key string, data *bytes.Buffer, item 
 }
 
 // writeDeleteOperation adds delete a Document by ID request into Bulk API request.
-func (d *Destination) writeDeleteOperation(key string, data *bytes.Buffer) error {
+func (d *Destination) writeDeleteOperation(key string, data *bytes.Buffer, record opencdc.Record) error {
 	jsonEncoder := json.NewEncoder(data)
 
 	// Prepare data
-	metadata, err := d.client.PrepareDeleteOperation(key)
+	metadata, err := d.client.PrepareDeleteOperation(key, record)
 	if err != nil {
 		return fmt.Errorf("failed to prepare metadata with key=%s: %w", key, err)
 	}

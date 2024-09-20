@@ -14,6 +14,8 @@
 
 package v8
 
+import "github.com/conduitio/conduit-commons/opencdc"
+
 //go:generate moq -out config_moq_test.go . config
 type config interface {
 	GetHost() string
@@ -23,5 +25,5 @@ type config interface {
 	GetAPIKey() string
 	GetServiceToken() string
 	GetCertificateFingerprint() string
-	GetIndex() string
+	GetIndex(r opencdc.Record) (string, error)
 }

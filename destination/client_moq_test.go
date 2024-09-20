@@ -29,7 +29,7 @@ var _ client = &clientMock{}
 //			PrepareCreateOperationFunc: func(item opencdc.Record) (interface{}, interface{}, error) {
 //				panic("mock out the PrepareCreateOperation method")
 //			},
-//			PrepareDeleteOperationFunc: func(key string) (interface{}, error) {
+//			PrepareDeleteOperationFunc: func(key string, item opencdc.Record) (interface{}, error) {
 //				panic("mock out the PrepareDeleteOperation method")
 //			},
 //			PrepareUpsertOperationFunc: func(key string, item opencdc.Record) (interface{}, interface{}, error) {
@@ -52,7 +52,7 @@ type clientMock struct {
 	PrepareCreateOperationFunc func(item opencdc.Record) (interface{}, interface{}, error)
 
 	// PrepareDeleteOperationFunc mocks the PrepareDeleteOperation method.
-	PrepareDeleteOperationFunc func(key string) (interface{}, error)
+	PrepareDeleteOperationFunc func(key string, item opencdc.Record) (interface{}, error)
 
 	// PrepareUpsertOperationFunc mocks the PrepareUpsertOperation method.
 	PrepareUpsertOperationFunc func(key string, item opencdc.Record) (interface{}, interface{}, error)
@@ -80,6 +80,8 @@ type clientMock struct {
 		PrepareDeleteOperation []struct {
 			// Key is the key argument value.
 			Key string
+			// Item is the item argument value.
+			Item opencdc.Record
 		}
 		// PrepareUpsertOperation holds details about calls to the PrepareUpsertOperation method.
 		PrepareUpsertOperation []struct {
@@ -197,19 +199,21 @@ func (mock *clientMock) PrepareCreateOperationCalls() []struct {
 }
 
 // PrepareDeleteOperation calls PrepareDeleteOperationFunc.
-func (mock *clientMock) PrepareDeleteOperation(key string) (interface{}, error) {
+func (mock *clientMock) PrepareDeleteOperation(key string, item opencdc.Record) (interface{}, error) {
 	if mock.PrepareDeleteOperationFunc == nil {
 		panic("clientMock.PrepareDeleteOperationFunc: method is nil but client.PrepareDeleteOperation was just called")
 	}
 	callInfo := struct {
-		Key string
+		Key  string
+		Item opencdc.Record
 	}{
-		Key: key,
+		Key:  key,
+		Item: item,
 	}
 	mock.lockPrepareDeleteOperation.Lock()
 	mock.calls.PrepareDeleteOperation = append(mock.calls.PrepareDeleteOperation, callInfo)
 	mock.lockPrepareDeleteOperation.Unlock()
-	return mock.PrepareDeleteOperationFunc(key)
+	return mock.PrepareDeleteOperationFunc(key, item)
 }
 
 // PrepareDeleteOperationCalls gets all the calls that were made to PrepareDeleteOperation.
@@ -217,10 +221,12 @@ func (mock *clientMock) PrepareDeleteOperation(key string) (interface{}, error) 
 //
 //	len(mockedclient.PrepareDeleteOperationCalls())
 func (mock *clientMock) PrepareDeleteOperationCalls() []struct {
-	Key string
+	Key  string
+	Item opencdc.Record
 } {
 	var calls []struct {
-		Key string
+		Key  string
+		Item opencdc.Record
 	}
 	mock.lockPrepareDeleteOperation.RLock()
 	calls = mock.calls.PrepareDeleteOperation
