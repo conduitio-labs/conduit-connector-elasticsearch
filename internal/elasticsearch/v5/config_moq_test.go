@@ -4,6 +4,7 @@
 package v5
 
 import (
+	"github.com/conduitio/conduit-commons/opencdc"
 	"sync"
 )
 
@@ -20,7 +21,7 @@ var _ config = &configMock{}
 //			GetHostFunc: func() string {
 //				panic("mock out the GetHost method")
 //			},
-//			GetIndexFunc: func() string {
+//			GetIndexFunc: func(r opencdc.Record) (string, error) {
 //				panic("mock out the GetIndex method")
 //			},
 //			GetPasswordFunc: func() string {
@@ -43,7 +44,7 @@ type configMock struct {
 	GetHostFunc func() string
 
 	// GetIndexFunc mocks the GetIndex method.
-	GetIndexFunc func() string
+	GetIndexFunc func(r opencdc.Record) (string, error)
 
 	// GetPasswordFunc mocks the GetPassword method.
 	GetPasswordFunc func() string
@@ -61,6 +62,8 @@ type configMock struct {
 		}
 		// GetIndex holds details about calls to the GetIndex method.
 		GetIndex []struct {
+			// R is the r argument value.
+			R opencdc.Record
 		}
 		// GetPassword holds details about calls to the GetPassword method.
 		GetPassword []struct {
@@ -107,16 +110,19 @@ func (mock *configMock) GetHostCalls() []struct {
 }
 
 // GetIndex calls GetIndexFunc.
-func (mock *configMock) GetIndex() string {
+func (mock *configMock) GetIndex(r opencdc.Record) (string, error) {
 	if mock.GetIndexFunc == nil {
 		panic("configMock.GetIndexFunc: method is nil but config.GetIndex was just called")
 	}
 	callInfo := struct {
-	}{}
+		R opencdc.Record
+	}{
+		R: r,
+	}
 	mock.lockGetIndex.Lock()
 	mock.calls.GetIndex = append(mock.calls.GetIndex, callInfo)
 	mock.lockGetIndex.Unlock()
-	return mock.GetIndexFunc()
+	return mock.GetIndexFunc(r)
 }
 
 // GetIndexCalls gets all the calls that were made to GetIndex.
@@ -124,8 +130,10 @@ func (mock *configMock) GetIndex() string {
 //
 //	len(mockedconfig.GetIndexCalls())
 func (mock *configMock) GetIndexCalls() []struct {
+	R opencdc.Record
 } {
 	var calls []struct {
+		R opencdc.Record
 	}
 	mock.lockGetIndex.RLock()
 	calls = mock.calls.GetIndex

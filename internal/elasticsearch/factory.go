@@ -21,7 +21,6 @@ import (
 	v6 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v6"
 	v7 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v7"
 	v8 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v8"
-	"github.com/conduitio/conduit-commons/opencdc"
 )
 
 type Version = string
@@ -42,7 +41,7 @@ var (
 
 // NewClient creates new Elasticsearch client which supports given server version.
 // Returns error when provided version is unsupported or client initialization failed.
-func NewClient(version Version, config interface{}, indexFn func(opencdc.Record) (string, error)) (Client, error) {
+func NewClient(version Version, config interface{}) (Client, error) {
 	switch version {
 	case Version5:
 		return v5ClientBuilder(config)
@@ -54,7 +53,7 @@ func NewClient(version Version, config interface{}, indexFn func(opencdc.Record)
 		return v7ClientBuilder(config)
 
 	case Version8:
-		return v8ClientBuilder(config, indexFn)
+		return v8ClientBuilder(config)
 
 	default:
 		return nil, fmt.Errorf("unsupported version: %s", version)

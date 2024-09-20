@@ -95,10 +95,16 @@ func (c *Client) Bulk(ctx context.Context, reader io.Reader) (io.ReadCloser, err
 }
 
 func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, interface{}, error) {
+	// Determine the index name
+	indexName, err := c.cfg.GetIndex(item)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to determine index name: %w", err)
+	}
+
 	// Prepare metadata
 	metadata := bulkRequestActionAndMetadata{
 		Index: &bulkRequestIndexAction{
-			Index: c.cfg.GetIndex(),
+			Index: indexName,
 			Type:  c.cfg.GetType(),
 		},
 	}
@@ -113,18 +119,22 @@ func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, inter
 }
 
 func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interface{}, interface{}, error) {
+	// Determine the index name
+	indexName, err := c.cfg.GetIndex(item)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to determine index name: %w", err)
+	}
+
 	// Prepare metadata
 	metadata := bulkRequestActionAndMetadata{
 		Update: &bulkRequestUpdateAction{
 			ID:    key,
-			Index: c.cfg.GetIndex(),
+			Index: indexName,
 			Type:  c.cfg.GetType(),
 		},
 	}
 
 	// Prepare payload
-	var err error
-
 	payload := bulkRequestUpdateSource{
 		Doc:         nil,
 		DocAsUpsert: true,
@@ -138,11 +148,17 @@ func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interf
 	return metadata, payload, nil
 }
 
-func (c *Client) PrepareDeleteOperation(key string, _ opencdc.Record) (interface{}, error) {
+func (c *Client) PrepareDeleteOperation(key string, item opencdc.Record) (interface{}, error) {
+	// Determine the index name
+	indexName, err := c.cfg.GetIndex(item)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine index name: %w", err)
+	}
+
 	return bulkRequestActionAndMetadata{
 		Delete: &bulkRequestDeleteAction{
 			ID:    key,
-			Index: c.cfg.GetIndex(),
+			Index: indexName,
 			Type:  c.cfg.GetType(),
 		},
 	}, nil

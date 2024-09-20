@@ -29,9 +29,7 @@ const indexName = "someIndexName"
 
 func TestNewClient(t *testing.T) {
 	t.Run("Fails when provided config object is invalid", func(t *testing.T) {
-		client, err := NewClient("invalid config object", func(opencdc.Record) (string, error) {
-			return indexName, nil
-		})
+		client, err := NewClient("invalid config object")
 
 		require.Nil(t, client)
 		require.EqualError(t, err, "provided config object is invalid")
@@ -51,8 +49,10 @@ func TestClient_GetClient(t *testing.T) {
 func TestClient_PrepareCreateOperation(t *testing.T) {
 	t.Run("Fails when payload could not be prepared", func(t *testing.T) {
 		client := Client{
-			indexFn: func(opencdc.Record) (string, error) {
-				return indexName, nil
+			cfg: &configMock{
+				GetIndexFunc: func(_ opencdc.Record) (string, error) {
+					return indexName, nil
+				},
 			},
 		}
 
@@ -72,8 +72,10 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 
 	t.Run("Fails when index name could not be determined", func(t *testing.T) {
 		client := Client{
-			indexFn: func(opencdc.Record) (string, error) {
-				return "", fmt.Errorf("failed to determine index")
+			cfg: &configMock{
+				GetIndexFunc: func(_ opencdc.Record) (string, error) {
+					return "", fmt.Errorf("failed to determine index")
+				},
 			},
 		}
 
@@ -93,8 +95,10 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 
 	t.Run("Successfully prepares create operation", func(t *testing.T) {
 		client := Client{
-			indexFn: func(opencdc.Record) (string, error) {
-				return indexName, nil
+			cfg: &configMock{
+				GetIndexFunc: func(_ opencdc.Record) (string, error) {
+					return indexName, nil
+				},
 			},
 		}
 
@@ -127,8 +131,10 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 func TestClient_PrepareUpsertOperation(t *testing.T) {
 	t.Run("Fails when payload could not be prepared", func(t *testing.T) {
 		client := Client{
-			indexFn: func(opencdc.Record) (string, error) {
-				return indexName, nil
+			cfg: &configMock{
+				GetIndexFunc: func(_ opencdc.Record) (string, error) {
+					return indexName, nil
+				},
 			},
 		}
 
@@ -154,8 +160,10 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 
 	t.Run("Fails when index name could not be determined", func(t *testing.T) {
 		client := Client{
-			indexFn: func(opencdc.Record) (string, error) {
-				return "", fmt.Errorf("failed to determine index")
+			cfg: &configMock{
+				GetIndexFunc: func(_ opencdc.Record) (string, error) {
+					return "", fmt.Errorf("failed to determine index")
+				},
 			},
 		}
 
@@ -181,8 +189,10 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 
 	t.Run("Successfully prepares upsert operation", func(t *testing.T) {
 		client := Client{
-			indexFn: func(opencdc.Record) (string, error) {
-				return indexName, nil
+			cfg: &configMock{
+				GetIndexFunc: func(_ opencdc.Record) (string, error) {
+					return indexName, nil
+				},
 			},
 		}
 
@@ -226,8 +236,10 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 func TestClient_PrepareDeleteOperation(t *testing.T) {
 	t.Run("Fails when index name could not be determined", func(t *testing.T) {
 		client := Client{
-			indexFn: func(opencdc.Record) (string, error) {
-				return "", fmt.Errorf("failed to determine index")
+			cfg: &configMock{
+				GetIndexFunc: func(_ opencdc.Record) (string, error) {
+					return "", fmt.Errorf("failed to determine index")
+				},
 			},
 		}
 
@@ -242,8 +254,10 @@ func TestClient_PrepareDeleteOperation(t *testing.T) {
 
 	t.Run("Successfully prepares delete operation", func(t *testing.T) {
 		client := Client{
-			indexFn: func(opencdc.Record) (string, error) {
-				return indexName, nil
+			cfg: &configMock{
+				GetIndexFunc: func(_ opencdc.Record) (string, error) {
+					return indexName, nil
+				},
 			},
 		}
 

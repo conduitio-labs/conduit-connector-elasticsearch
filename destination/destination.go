@@ -59,13 +59,8 @@ func (d *Destination) Configure(ctx context.Context, cfg config.Config) (err err
 }
 
 func (d *Destination) Open(ctx context.Context) (err error) {
-	indexFn, err := d.config.IndexFunction()
-	if err != nil {
-		return fmt.Errorf("invalid index name or index function: %w", err)
-	}
-
 	// Initialize Elasticsearch client
-	d.client, err = elasticsearch.NewClient(d.config.Version, d.config, indexFn)
+	d.client, err = elasticsearch.NewClient(d.config.Version, d.config)
 	if err != nil {
 		return fmt.Errorf("failed creating client: %w", err)
 	}
@@ -124,15 +119,16 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 			continue
 		}
 
-		if itemResponse.Status >= 200 && itemResponse.Status < 300 {
+		if (itemResponse.Status >= 200 && itemResponse.Status < 300) || itemResponse.Status == 404 {
 			continue
 		}
 
 		if itemResponse.Error == nil {
 			return n + 1, fmt.Errorf(
-				"item with key=%s %s failure: unknown error",
+				"item with key=%s %s failure: unknown error status: %d",
 				itemResponse.ID,
 				operationType,
+				itemResponse.Status,
 			)
 		}
 

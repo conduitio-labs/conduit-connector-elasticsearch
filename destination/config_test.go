@@ -17,6 +17,7 @@ package destination
 import (
 	"testing"
 
+	"github.com/conduitio/conduit-commons/opencdc"
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/require"
 )
@@ -55,6 +56,30 @@ func TestConfig_Getters(t *testing.T) {
 	require.Equal(t, apiKey, config.GetAPIKey())
 	require.Equal(t, serviceToken, config.GetServiceToken())
 	require.Equal(t, certificateFingerprint, config.GetCertificateFingerprint())
-	require.Equal(t, indexName, config.GetIndex())
 	require.Equal(t, indexType, config.GetType())
+
+	record := opencdc.Record{}
+	index, err := config.GetIndex(record)
+	require.NoError(t, err)
+	require.Equal(t, indexName, index)
+}
+
+func TestConfig_GetIndex_Template(t *testing.T) {
+	fakerInstance := faker.New()
+
+	indexName := fakerInstance.Lorem().Word()
+
+	config := Config{
+		Index: "{{ index .Metadata \"opencdc.collection\" }}",
+	}
+
+	record := opencdc.Record{
+		Metadata: map[string]string{
+			"opencdc.collection": indexName,
+		},
+	}
+
+	index, err := config.GetIndex(record)
+	require.NoError(t, err)
+	require.Equal(t, indexName, index)
 }

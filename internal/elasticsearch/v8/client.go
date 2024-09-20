@@ -25,7 +25,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
-func NewClient(cfg interface{}, indexFn func(opencdc.Record) (string, error)) (*Client, error) {
+func NewClient(cfg interface{}) (*Client, error) {
 	configTyped, ok := cfg.(config)
 	if !ok {
 		return nil, errors.New("provided config object is invalid")
@@ -45,16 +45,14 @@ func NewClient(cfg interface{}, indexFn func(opencdc.Record) (string, error)) (*
 	}
 
 	return &Client{
-		es:      esClient,
-		cfg:     configTyped,
-		indexFn: indexFn,
+		es:  esClient,
+		cfg: configTyped,
 	}, nil
 }
 
 type Client struct {
-	es      *elasticsearch.Client
-	cfg     config
-	indexFn func(opencdc.Record) (string, error)
+	es  *elasticsearch.Client
+	cfg config
 }
 
 // GetClient returns Elasticsearch v8 client.
@@ -102,7 +100,7 @@ func (c *Client) Bulk(ctx context.Context, reader io.Reader) (io.ReadCloser, err
 
 func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, interface{}, error) {
 	// Determine the index name
-	indexName, err := c.indexFn(item)
+	indexName, err := c.cfg.GetIndex(item)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to determine index name: %w", err)
 	}
@@ -125,7 +123,7 @@ func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, inter
 
 func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interface{}, interface{}, error) {
 	// Determine the index name
-	indexName, err := c.indexFn(item)
+	indexName, err := c.cfg.GetIndex(item)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to determine index name: %w", err)
 	}
@@ -155,7 +153,7 @@ func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interf
 
 func (c *Client) PrepareDeleteOperation(key string, item opencdc.Record) (interface{}, error) {
 	// Determine the index name
-	indexName, err := c.indexFn(item)
+	indexName, err := c.cfg.GetIndex(item)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine index name: %w", err)
 	}
