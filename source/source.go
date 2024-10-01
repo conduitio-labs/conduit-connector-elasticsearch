@@ -1,0 +1,92 @@
+// Copyright © 2022 Meroxa, Inc. and Miquido
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package source
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	"github.com/conduitio/conduit-commons/config"
+	"github.com/conduitio/conduit-commons/opencdc"
+	sdk "github.com/conduitio/conduit-connector-sdk"
+)
+
+type Source struct {
+	sdk.UnimplementedSource
+
+	config   Config
+	client   client
+	iterator Iterator
+}
+
+type client = elasticsearch.Client
+
+// NewSource initialises a new source.
+func NewSource() sdk.Source {
+	return sdk.SourceWithMiddleware(&Source{}, sdk.DefaultSourceMiddleware()...)
+}
+
+// Parameters returns a map of named Parameters that describe how to configure the Source.
+func (s *Source) Parameters() config.Parameters {
+	return s.config.Parameters()
+}
+
+// Configure parses and stores configurations,
+// returns an error in case of invalid configuration.
+func (s *Source) Configure(ctx context.Context, cfgRaw config.Config) error {
+	sdk.Logger(ctx).Info().Msg("Configuring ElasticSearch Source...")
+
+	err := sdk.Util.ParseConfig(ctx, cfgRaw, &s.config, NewSource().Parameters())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Open parses the position and initializes the iterator.
+func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
+	sdk.Logger(ctx).Info().Msg("Opening an ElasticSearch Source...")
+	return nil
+}
+
+// Read returns the next record.
+func (s *Source) Read(ctx context.Context) (opencdc.Record, error) {
+	sdk.Logger(ctx).Debug().Msg("Reading a record from ElasticSearch Source...")
+	return opencdc.Record{}, nil
+}
+
+// Ack logs the debug event with the position.
+func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
+	sdk.Logger(ctx).Trace().
+		Str("position", string(position)).
+		Msg("got ack")
+
+	return nil
+}
+
+// Teardown gracefully shutdown connector.
+func (s *Source) Teardown(ctx context.Context) error {
+	sdk.Logger(ctx).Info().Msg("Tearing down the ElasticSearch Source")
+
+	if s.iterator != nil {
+		if err := s.iterator.Stop(); err != nil {
+			return fmt.Errorf("stop iterator: %w", err)
+		}
+	}
+
+	return nil
+}
