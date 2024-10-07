@@ -38,45 +38,7 @@ type Config struct {
 	// SHA256 hex fingerprint given by Elasticsearch on first launch.
 	CertificateFingerprint string `json:"certificateFingerprint"`
 	// The name of the indexes to read data from.
-	Index []string `json:"index"`
-	// // The name of the index's type to write the data to.
-	// Type string `json:"type"`
+	Indexes []string `json:"index"`
 	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.
-	BatchSize uint64 `json:"batchSize" default:"1"`
-}
-
-func (c Config) GetHost() string {
-	return c.Host
-}
-
-func (c Config) GetUsername() string {
-	return c.Username
-}
-
-func (c Config) GetPassword() string {
-	return c.Password
-}
-
-func (c Config) GetCloudID() string {
-	return c.CloudID
-}
-
-func (c Config) GetAPIKey() string {
-	return c.APIKey
-}
-
-func (c Config) GetServiceToken() string {
-	return c.ServiceToken
-}
-
-func (c Config) GetCertificateFingerprint() string {
-	return c.CertificateFingerprint
-}
-
-// func (c Config) GetIndex() string {
-// 	return c.Index
-// }
-
-func (c Config) GetType() string {
-	return c.Type
+	BatchSize uint64 `json:"batchSize" default:"1000"`
 }

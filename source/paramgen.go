@@ -9,15 +9,13 @@ import (
 
 const (
 	ConfigAPIKey                 = "APIKey"
-	ConfigBulkSize               = "bulkSize"
+	ConfigBatchSize              = "batchSize"
 	ConfigCertificateFingerprint = "certificateFingerprint"
 	ConfigCloudID                = "cloudID"
 	ConfigHost                   = "host"
 	ConfigIndex                  = "index"
 	ConfigPassword               = "password"
-	ConfigRetries                = "retries"
 	ConfigServiceToken           = "serviceToken"
-	ConfigType                   = "type"
 	ConfigUsername               = "username"
 	ConfigVersion                = "version"
 )
@@ -30,7 +28,7 @@ func (Config) Parameters() map[string]config.Parameter {
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{},
 		},
-		ConfigBulkSize: {
+		ConfigBatchSize: {
 			Default:     "1000",
 			Description: "The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.",
 			Type:        config.ParameterTypeInt,
@@ -58,7 +56,7 @@ func (Config) Parameters() map[string]config.Parameter {
 		},
 		ConfigIndex: {
 			Default:     "",
-			Description: "The name of the index to write the data to.",
+			Description: "The name of the indexes to read data from.",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{},
 		},
@@ -68,21 +66,9 @@ func (Config) Parameters() map[string]config.Parameter {
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{},
 		},
-		ConfigRetries: {
-			Default:     "0",
-			Description: "The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255.",
-			Type:        config.ParameterTypeInt,
-			Validations: []config.Validation{},
-		},
 		ConfigServiceToken: {
 			Default:     "",
 			Description: "Service token for authorization; if set, overrides username/password.",
-			Type:        config.ParameterTypeString,
-			Validations: []config.Validation{},
-		},
-		ConfigType: {
-			Default:     "",
-			Description: "The name of the index's type to write the data to.",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{},
 		},
