@@ -39,4 +39,7 @@ type Client interface {
 
 	// PrepareDeleteOperation prepares delete operation definition for Bulk API query.
 	PrepareDeleteOperation(key string) (metadata interface{}, err error)
+
+	// Search calls the elasticsearch search api and retuns a list of records read from an index.
+	Search(ctx context.Context, index string, offset, size *int) (interface{}, error)
 }

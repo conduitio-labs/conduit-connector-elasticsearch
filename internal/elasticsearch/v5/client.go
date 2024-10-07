@@ -159,3 +159,9 @@ func preparePayload(item *opencdc.Record) (json.RawMessage, error) {
 		return itemPayload.Bytes(), nil
 	}
 }
+
+// Search calls the elasticsearch search api and retuns a list of opencdc.Record read from an index.
+func (c *Client) Search(ctx context.Context, index string, offset, size *int) (interface{}, error) {
+	// TODO: implement elasticsearch search api
+	return nil, nil
+}
