@@ -101,7 +101,30 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 // Read returns the next record.
 func (s *Source) Read(ctx context.Context) (opencdc.Record, error) {
 	sdk.Logger(ctx).Debug().Msg("Reading a record from ElasticSearch Source...")
-	return opencdc.Record{}, nil
+
+	if s == nil || s.ch == nil {
+		return opencdc.Record{}, fmt.Errorf("error source not opened for reading")
+	}
+
+	record, ok := <-s.ch
+	if !ok {
+		return opencdc.Record{}, fmt.Errorf("error reading data")
+	}
+
+	index, ok := record.Metadata["metadataFieldIndex"]
+	if !ok {
+		// this should never happen
+		return opencdc.Record{}, fmt.Errorf("error index not found in data header")
+	}
+
+	offset, ok := s.offsets[index]
+	if !ok {
+		// this should never happen
+		return opencdc.Record{}, fmt.Errorf("error offset index not found")
+	}
+
+	s.offsets[index] = offset + 1
+	return record, nil
 }
 
 // Ack logs the debug event with the position.
