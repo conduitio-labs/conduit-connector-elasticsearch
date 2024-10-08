@@ -129,9 +129,23 @@ func (s *Source) Read(ctx context.Context) (opencdc.Record, error) {
 
 // Ack logs the debug event with the position.
 func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
-	sdk.Logger(ctx).Trace().
-		Str("position", string(position)).
-		Msg("got ack")
+	pos := Position{}
+	err := pos.unmarshal(position)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling opencdc position: %w", err)
+	}
+
+	last := s.offsets[pos.Index]
+
+	for _, p := range s.positions {
+		if p.Index == pos.Index && p.Pos > pos.Pos {
+			return fmt.Errorf("error acknowledging: position less than initial sdk position")
+		}
+	}
+
+	if last < pos.Pos {
+		return fmt.Errorf("error acknowledging: record not read")
+	}
 
 	return nil
 }
