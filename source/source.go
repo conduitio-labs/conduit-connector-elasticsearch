@@ -17,6 +17,7 @@ package source
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	"github.com/conduitio/conduit-commons/config"
@@ -33,6 +34,7 @@ type Source struct {
 	positions []Position
 	ch        chan opencdc.Record
 	shutdown  chan struct{}
+	wg        *sync.WaitGroup
 }
 
 // NewSource initialises a new source.
@@ -82,8 +84,11 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	s.ch = make(chan opencdc.Record, s.config.BatchSize)
 	s.shutdown = make(chan struct{})
 	s.offsets = make(map[string]int)
+	s.wg = &sync.WaitGroup{}
 
 	for _, index := range s.config.Indexes {
+		s.wg.Add(1)
+
 		offset := 0
 		for _, position := range s.positions {
 			if index == position.Index {
@@ -161,8 +166,11 @@ func (s *Source) Teardown(ctx context.Context) error {
 	}
 
 	close(s.shutdown)
-	close(s.ch)
 
+	// wait for goroutines to finish
+	s.wg.Wait()
+	// close the read channel for write
+	close(s.ch)
 	// reset read channel to nil, to avoid reading buffered records
 	s.ch = nil
 	return nil

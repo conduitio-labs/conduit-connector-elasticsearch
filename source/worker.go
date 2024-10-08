@@ -33,6 +33,8 @@ func NewWorker(source *Source, index string, offset int) {
 }
 
 func (w *Worker) start() {
+	defer w.source.wg.Done()
+
 	for {
 		response, err := w.source.client.Search(context.Background(), w.index, &w.offset, &w.source.config.BatchSize)
 		if err != nil {
