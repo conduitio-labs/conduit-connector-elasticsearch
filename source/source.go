@@ -27,12 +27,12 @@ import (
 type Source struct {
 	sdk.UnimplementedSource
 
-	config   Config
-	client   client
-	iterator Iterator
+	config    Config
+	client    elasticsearch.Client
+	offsets   map[string]int
+	positions []Position
+	ch        chan opencdc.Record
 }
-
-type client = elasticsearch.Client
 
 // NewSource initialises a new source.
 func NewSource() sdk.Source {
@@ -60,6 +60,41 @@ func (s *Source) Configure(ctx context.Context, cfgRaw config.Config) error {
 // Open parses the position and initializes the iterator.
 func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	sdk.Logger(ctx).Info().Msg("Opening an ElasticSearch Source...")
+
+	var err error
+	s.positions, err = ParseSDKPosition(position)
+	if err != nil {
+		return err
+	}
+
+	// Initialize Elasticsearch client
+	s.client, err = elasticsearch.NewClient(s.config.Version, s.config)
+	if err != nil {
+		return fmt.Errorf("failed creating client: %w", err)
+	}
+
+	// Check the connection
+	if err := s.client.Ping(ctx); err != nil {
+		return fmt.Errorf("server cannot be pinged: %w", err)
+	}
+
+	s.ch = make(chan opencdc.Record, s.config.BatchSize)
+	s.offsets = make(map[string]int)
+
+	for _, index := range s.config.Indexes {
+		offset := 0
+		for _, position := range s.positions {
+			if index == position.Index {
+				offset = position.Pos
+			}
+		}
+
+		s.offsets[index] = offset
+
+		// a new worker for a new index
+		NewWorker(s, index, offset)
+	}
+
 	return nil
 }
 
@@ -82,11 +117,11 @@ func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
 func (s *Source) Teardown(ctx context.Context) error {
 	sdk.Logger(ctx).Info().Msg("Tearing down the ElasticSearch Source")
 
-	if s.iterator != nil {
-		if err := s.iterator.Stop(); err != nil {
-			return fmt.Errorf("stop iterator: %w", err)
-		}
-	}
+	// if s.iterator != nil {
+	// 	if err := s.iterator.Stop(); err != nil {
+	// 		return fmt.Errorf("stop iterator: %w", err)
+	// 	}
+	// }
 
 	return nil
 }
