@@ -17,6 +17,8 @@
 package source
 
 import (
+	"time"
+
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 )
 
@@ -40,5 +42,7 @@ type Config struct {
 	// The name of the indexes to read data from.
 	Indexes []string `json:"index"`
 	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.
-	BatchSize uint64 `json:"batchSize" default:"1000"`
+	BatchSize int `json:"batchSize" default:"1000"`
+	// This period is used by workers to poll for new data at regular intervals.
+	PollingPeriod time.Duration
 }

@@ -37,16 +37,23 @@ func (w *Worker) start() {
 
 	for {
 		response, err := w.source.client.Search(context.Background(), w.index, &w.offset, &w.source.config.BatchSize)
-		if err != nil {
-			log.Println("search() err:", err)
-			time.Sleep(1 * time.Second)
-			continue
-		}
-
 		res, ok := response.(v8.SearchResponse)
-		if !ok {
-			// TODO
-			// return nil, fmt.Errorf("invalid search response")
+		if err != nil || len(res.Hits.Hits) == 0 || !ok {
+			if err != nil {
+				log.Println("search() err:", err)
+			}
+			if !ok {
+				log.Println("invalid response")
+			}
+
+			select {
+			case <-w.source.shutdown:
+				log.Println("shuting down..")
+				return
+
+			case <-time.After(w.source.config.PollingPeriod):
+				continue
+			}
 		}
 
 		for _, hit := range res.Hits.Hits {

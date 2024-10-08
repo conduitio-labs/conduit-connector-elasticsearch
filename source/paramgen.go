@@ -15,6 +15,7 @@ const (
 	ConfigHost                   = "host"
 	ConfigIndex                  = "index"
 	ConfigPassword               = "password"
+	ConfigPollingPeriod          = "pollingPeriod"
 	ConfigServiceToken           = "serviceToken"
 	ConfigUsername               = "username"
 	ConfigVersion                = "version"
@@ -64,6 +65,12 @@ func (Config) Parameters() map[string]config.Parameter {
 			Default:     "",
 			Description: "The password for HTTP Basic Authentication.",
 			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{},
+		},
+		ConfigPollingPeriod: {
+			Default:     "",
+			Description: "This period is used by workers to poll for new data at regular intervals.",
+			Type:        config.ParameterTypeDuration,
 			Validations: []config.Validation{},
 		},
 		ConfigServiceToken: {
