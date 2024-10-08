@@ -74,8 +74,14 @@ func (w *Worker) start() {
 
 			record := sdk.Util.Source.NewRecordCreate(sdkPosition, metadata, key, opencdc.RawData(payload))
 
-			w.source.ch <- record
-			w.offset++
+			select {
+			case w.source.ch <- record:
+				w.offset++
+
+			case <-w.source.shutdown:
+				log.Println("Stopping worker...")
+				return
+			}
 		}
 	}
 }

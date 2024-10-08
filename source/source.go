@@ -32,6 +32,7 @@ type Source struct {
 	offsets   map[string]int
 	positions []Position
 	ch        chan opencdc.Record
+	shutdown  chan struct{}
 }
 
 // NewSource initialises a new source.
@@ -79,6 +80,7 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	}
 
 	s.ch = make(chan opencdc.Record, s.config.BatchSize)
+	s.shutdown = make(chan struct{})
 	s.offsets = make(map[string]int)
 
 	for _, index := range s.config.Indexes {
@@ -154,11 +156,14 @@ func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
 func (s *Source) Teardown(ctx context.Context) error {
 	sdk.Logger(ctx).Info().Msg("Tearing down the ElasticSearch Source")
 
-	// if s.iterator != nil {
-	// 	if err := s.iterator.Stop(); err != nil {
-	// 		return fmt.Errorf("stop iterator: %w", err)
-	// 	}
-	// }
+	if s == nil || s.ch == nil {
+		return fmt.Errorf("error source not opened for teardown")
+	}
 
+	close(s.shutdown)
+	close(s.ch)
+
+	// reset read channel to nil, to avoid reading buffered records
+	s.ch = nil
 	return nil
 }
