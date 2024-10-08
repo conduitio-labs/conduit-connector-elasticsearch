@@ -52,3 +52,12 @@ func (p Position) marshal() (opencdc.Position, error) {
 
 	return positionBytes, nil
 }
+
+// unmarshal unmarshals opencdc.Position and retuns an error on failure.
+func (p Position) unmarshal(position opencdc.Position) error {
+	err := json.Unmarshal(position, &p)
+	if err != nil {
+		return fmt.Errorf("unmarshal position: %w", err)
+	}
+	return nil
+}
