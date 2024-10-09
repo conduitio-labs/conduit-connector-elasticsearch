@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	"github.com/conduitio/conduit-commons/opencdc"
+
 	"github.com/elastic/go-elasticsearch/v7"
 )
 
@@ -162,8 +164,8 @@ func preparePayload(item *opencdc.Record) (json.RawMessage, error) {
 	}
 }
 
-// Search calls the elasticsearch search api and retuns a list of opencdc.Record read from an index.
-func (c *Client) Search(ctx context.Context, index string, offset, size *int) (interface{}, error) {
+// Search calls the elasticsearch search api and retuns SearchResponse read from an index.
+func (c *Client) Search(ctx context.Context, index string, offset, size *int) (*api.SearchResponse, error) {
 	// TODO: implement elasticsearch search api
 	return nil, nil
 }

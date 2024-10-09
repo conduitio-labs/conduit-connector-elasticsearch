@@ -6,14 +6,13 @@ import (
 	"log"
 	"time"
 
-	v8 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v8"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
 const (
 	// metadataFieldIndex is a name of a record metadata field that stores a ElasticSearch Index name.
-	metadataFieldIndex = "elasticsearch.index"
+	metadataFieldIndex = "opencdc.collection"
 )
 
 type Worker struct {
@@ -37,18 +36,14 @@ func (w *Worker) start() {
 
 	for {
 		response, err := w.source.client.Search(context.Background(), w.index, &w.offset, &w.source.config.BatchSize)
-		res, ok := response.(v8.SearchResponse)
-		if err != nil || len(res.Hits.Hits) == 0 || !ok {
+		if err != nil || len(response.Hits.Hits) == 0 {
 			if err != nil {
 				log.Println("search() err:", err)
-			}
-			if !ok {
-				log.Println("invalid response")
 			}
 
 			select {
 			case <-w.source.shutdown:
-				log.Println("shuting down..")
+				log.Println("worker shutting down...")
 				return
 
 			case <-time.After(w.source.config.PollingPeriod):
@@ -56,7 +51,7 @@ func (w *Worker) start() {
 			}
 		}
 
-		for _, hit := range res.Hits.Hits {
+		for _, hit := range response.Hits.Hits {
 			metadata := opencdc.Metadata{
 				metadataFieldIndex: hit.Index,
 			}
@@ -76,6 +71,7 @@ func (w *Worker) start() {
 			sdkPosition, err := position.marshal()
 			if err != nil {
 				// handle
+				continue
 			}
 
 			key := make(opencdc.StructuredData)
@@ -88,7 +84,7 @@ func (w *Worker) start() {
 				w.offset++
 
 			case <-w.source.shutdown:
-				log.Println("Stopping worker...")
+				log.Println("worker shutting down...")
 				return
 			}
 		}

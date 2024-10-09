@@ -21,25 +21,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
+
 	"github.com/elastic/go-elasticsearch/esapi"
 )
 
-// SearchResponse is the JSON response from Elasticsearch search query.
-type SearchResponse struct {
-	Hits struct {
-		Total struct {
-			Value int `json:"value"`
-		} `json:"total"`
-		Hits []struct {
-			Index  string         `json:"index"`
-			ID     string         `json:"_id"`
-			Source map[string]any `json:"_source"`
-		} `json:"hits"`
-	} `json:"hits"`
-}
-
 // Search calls the elasticsearch search api and retuns SearchResponse read from an index.
-func (c *Client) Search(ctx context.Context, index string, offset, size *int) (interface{}, error) {
+func (c *Client) Search(ctx context.Context, index string, offset, size *int) (*api.SearchResponse, error) {
 	// Create the search request
 	req := esapi.SearchRequest{
 		Index: []string{index},
@@ -64,7 +52,7 @@ func (c *Client) Search(ctx context.Context, index string, offset, size *int) (i
 		return nil, fmt.Errorf("error search response: %s", res.String())
 	}
 
-	var response SearchResponse
+	var response *api.SearchResponse
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("error parsing the search response body: %s", err)
 	}

@@ -18,6 +18,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	"github.com/conduitio/conduit-commons/opencdc"
 )
 
@@ -40,6 +41,6 @@ type Client interface {
 	// PrepareDeleteOperation prepares delete operation definition for Bulk API query.
 	PrepareDeleteOperation(key string) (metadata interface{}, err error)
 
-	// Search calls the elasticsearch search api and retuns a list of records read from an index.
-	Search(ctx context.Context, index string, offset, size *int) (interface{}, error)
+	// Search calls the elasticsearch search api and retuns SearchResponse read from an index.
+	Search(ctx context.Context, index string, offset, size *int) (*api.SearchResponse, error)
 }
