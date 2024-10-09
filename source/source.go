@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. and Miquido
+// Copyright © 2024 Meroxa, Inc. and Miquido
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ func (s *Source) Read(ctx context.Context) (opencdc.Record, error) {
 }
 
 // Ack logs the debug event with the position.
-func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
+func (s *Source) Ack(_ context.Context, position opencdc.Position) error {
 	pos := Position{}
 	err := pos.unmarshal(position)
 	if err != nil {

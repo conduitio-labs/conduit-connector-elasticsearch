@@ -31,11 +31,11 @@ func (c *Client) Search(ctx context.Context, index string, offset, size *int) (*
 	// Create the search request
 	req := esapi.SearchRequest{
 		Index: []string{index},
-		Body: strings.NewReader(fmt.Sprintf(`{
+		Body: strings.NewReader(`{
 			"query": {
 				"match_all": {}
 			}
-		}`)),
+		}`),
 		From: offset,
 		Size: size,
 	}
@@ -44,7 +44,7 @@ func (c *Client) Search(ctx context.Context, index string, offset, size *int) (*
 	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	res, err := req.Do(ctx, c.es)
 	if err != nil {
-		return nil, fmt.Errorf("error getting search response: %s", err)
+		return nil, fmt.Errorf("error getting search response: %w", err)
 	}
 	defer res.Body.Close()
 
@@ -54,7 +54,7 @@ func (c *Client) Search(ctx context.Context, index string, offset, size *int) (*
 
 	var response *api.SearchResponse
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("error parsing the search response body: %s", err)
+		return nil, fmt.Errorf("error parsing the search response body: %w", err)
 	}
 
 	return response, nil
