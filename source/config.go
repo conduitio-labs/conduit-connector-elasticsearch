@@ -40,7 +40,7 @@ type Config struct {
 	// SHA256 hex fingerprint given by Elasticsearch on first launch.
 	CertificateFingerprint string `json:"certificateFingerprint"`
 	// The name of the indexes to read data from.
-	Indexes []string `json:"index"`
+	Indexes []string `json:"indexes"`
 	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.
 	BatchSize int `json:"batchSize" default:"1000"`
 	// This period is used by workers to poll for new data at regular intervals.

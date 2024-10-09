@@ -13,7 +13,7 @@ const (
 	ConfigCertificateFingerprint = "certificateFingerprint"
 	ConfigCloudID                = "cloudID"
 	ConfigHost                   = "host"
-	ConfigIndex                  = "index"
+	ConfigIndexes                = "indexes"
 	ConfigPassword               = "password"
 	ConfigPollingPeriod          = "pollingPeriod"
 	ConfigServiceToken           = "serviceToken"
@@ -55,7 +55,7 @@ func (Config) Parameters() map[string]config.Parameter {
 				config.ValidationRequired{},
 			},
 		},
-		ConfigIndex: {
+		ConfigIndexes: {
 			Default:     "",
 			Description: "The name of the indexes to read data from.",
 			Type:        config.ParameterTypeString,
