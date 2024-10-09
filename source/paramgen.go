@@ -68,7 +68,7 @@ func (Config) Parameters() map[string]config.Parameter {
 			Validations: []config.Validation{},
 		},
 		ConfigPollingPeriod: {
-			Default:     "",
+			Default:     "1s",
 			Description: "This period is used by workers to poll for new data at regular intervals.",
 			Type:        config.ParameterTypeDuration,
 			Validations: []config.Validation{},

@@ -28,9 +28,11 @@ import (
 type Source struct {
 	sdk.UnimplementedSource
 
-	config    Config
-	client    elasticsearch.Client
-	offsets   map[string]int
+	config Config
+	client elasticsearch.Client
+	// holds the last position of indexes returned by Read() method
+	offsets map[string]int
+	// hold the initial sdk position of indexes, used for Ack() method
 	positions []Position
 	ch        chan opencdc.Record
 	shutdown  chan struct{}

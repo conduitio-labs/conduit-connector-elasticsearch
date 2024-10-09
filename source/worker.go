@@ -35,6 +35,7 @@ type Worker struct {
 	offset int
 }
 
+// NewWorker create a new worker goroutine and starts polling elasticsearch for new records
 func NewWorker(source *Source, index string, offset int) {
 	worker := &Worker{
 		source: source,
@@ -45,6 +46,7 @@ func NewWorker(source *Source, index string, offset int) {
 	go worker.start()
 }
 
+// start polls elasticsearch for new records and writes it into the source channel
 func (w *Worker) start() {
 	defer w.source.wg.Done()
 
