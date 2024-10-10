@@ -5,6 +5,7 @@ package destination
 
 import (
 	"context"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	"github.com/conduitio/conduit-commons/opencdc"
 	"io"
 	"sync"
@@ -35,6 +36,9 @@ var _ client = &clientMock{}
 //			PrepareUpsertOperationFunc: func(key string, item opencdc.Record) (interface{}, interface{}, error) {
 //				panic("mock out the PrepareUpsertOperation method")
 //			},
+//			SearchFunc: func(ctx context.Context, index string, offset *int, size *int) (*api.SearchResponse, error) {
+//				panic("mock out the Search method")
+//			},
 //		}
 //
 //		// use mockedclient in code that requires client
@@ -56,6 +60,9 @@ type clientMock struct {
 
 	// PrepareUpsertOperationFunc mocks the PrepareUpsertOperation method.
 	PrepareUpsertOperationFunc func(key string, item opencdc.Record) (interface{}, interface{}, error)
+
+	// SearchFunc mocks the Search method.
+	SearchFunc func(ctx context.Context, index string, offset *int, size *int) (*api.SearchResponse, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -88,12 +95,24 @@ type clientMock struct {
 			// Item is the item argument value.
 			Item opencdc.Record
 		}
+		// Search holds details about calls to the Search method.
+		Search []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Index is the index argument value.
+			Index string
+			// Offset is the offset argument value.
+			Offset *int
+			// Size is the size argument value.
+			Size *int
+		}
 	}
 	lockBulk                   sync.RWMutex
 	lockPing                   sync.RWMutex
 	lockPrepareCreateOperation sync.RWMutex
 	lockPrepareDeleteOperation sync.RWMutex
 	lockPrepareUpsertOperation sync.RWMutex
+	lockSearch                 sync.RWMutex
 }
 
 // Bulk calls BulkFunc.
@@ -261,5 +280,49 @@ func (mock *clientMock) PrepareUpsertOperationCalls() []struct {
 	mock.lockPrepareUpsertOperation.RLock()
 	calls = mock.calls.PrepareUpsertOperation
 	mock.lockPrepareUpsertOperation.RUnlock()
+	return calls
+}
+
+// Search calls SearchFunc.
+func (mock *clientMock) Search(ctx context.Context, index string, offset *int, size *int) (*api.SearchResponse, error) {
+	if mock.SearchFunc == nil {
+		panic("clientMock.SearchFunc: method is nil but client.Search was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		Index  string
+		Offset *int
+		Size   *int
+	}{
+		Ctx:    ctx,
+		Index:  index,
+		Offset: offset,
+		Size:   size,
+	}
+	mock.lockSearch.Lock()
+	mock.calls.Search = append(mock.calls.Search, callInfo)
+	mock.lockSearch.Unlock()
+	return mock.SearchFunc(ctx, index, offset, size)
+}
+
+// SearchCalls gets all the calls that were made to Search.
+// Check the length with:
+//
+//	len(mockedclient.SearchCalls())
+func (mock *clientMock) SearchCalls() []struct {
+	Ctx    context.Context
+	Index  string
+	Offset *int
+	Size   *int
+} {
+	var calls []struct {
+		Ctx    context.Context
+		Index  string
+		Offset *int
+		Size   *int
+	}
+	mock.lockSearch.RLock()
+	calls = mock.calls.Search
+	mock.lockSearch.RUnlock()
 	return calls
 }

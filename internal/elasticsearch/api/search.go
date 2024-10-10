@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. and Miquido
+// Copyright © 2024 Meroxa, Inc. and Miquido
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package elasticsearch
+package api
 
-import (
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/source"
-	sdk "github.com/conduitio/conduit-connector-sdk"
-)
-
-var Connector = sdk.Connector{
-	NewSpecification: Specification,
-	NewSource:        source.NewSource,
-	NewDestination:   destination.NewDestination,
+// SearchResponse is the JSON response from Elasticsearch search query.
+type SearchResponse struct {
+	Hits struct {
+		Hits []struct {
+			Index  string         `json:"_index"`
+			ID     string         `json:"_id"`
+			Source map[string]any `json:"_source"`
+		} `json:"hits"`
+	} `json:"hits"`
 }
