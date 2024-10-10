@@ -41,8 +41,40 @@ type Config struct {
 	CertificateFingerprint string `json:"certificateFingerprint"`
 	// The name of the indexes to read data from.
 	Indexes []string `json:"indexes"`
-	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.
+	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10000`.
 	BatchSize int `json:"batchSize" default:"1000"`
 	// This period is used by workers to poll for new data at regular intervals.
 	PollingPeriod time.Duration `json:"pollingPeriod" default:"1s"`
+}
+
+func (c Config) GetHost() string {
+	return c.Host
+}
+
+func (c Config) GetUsername() string {
+	return c.Username
+}
+
+func (c Config) GetPassword() string {
+	return c.Password
+}
+
+func (c Config) GetCloudID() string {
+	return c.CloudID
+}
+
+func (c Config) GetAPIKey() string {
+	return c.APIKey
+}
+
+func (c Config) GetServiceToken() string {
+	return c.ServiceToken
+}
+
+func (c Config) GetCertificateFingerprint() string {
+	return c.CertificateFingerprint
+}
+
+func (c Config) GetIndex() string {
+	return "" // Only for Config to implement the elasticsearch/internal/config
 }

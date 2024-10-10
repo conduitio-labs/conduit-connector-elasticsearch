@@ -17,11 +17,8 @@ package api
 // SearchResponse is the JSON response from Elasticsearch search query.
 type SearchResponse struct {
 	Hits struct {
-		Total struct {
-			Value int `json:"value"`
-		} `json:"total"`
 		Hits []struct {
-			Index  string         `json:"index"`
+			Index  string         `json:"_index"`
 			ID     string         `json:"_id"`
 			Source map[string]any `json:"_source"`
 		} `json:"hits"`

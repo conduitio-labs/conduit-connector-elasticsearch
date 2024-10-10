@@ -120,7 +120,7 @@ func (s *Source) Read(ctx context.Context) (opencdc.Record, error) {
 		return opencdc.Record{}, fmt.Errorf("error reading data")
 	}
 
-	index, ok := record.Metadata["metadataFieldIndex"]
+	index, ok := record.Metadata[metadataFieldIndex]
 	if !ok {
 		// this should never happen
 		return opencdc.Record{}, fmt.Errorf("error index not found in data header")
