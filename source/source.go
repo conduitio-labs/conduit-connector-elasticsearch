@@ -28,15 +28,12 @@ import (
 type Source struct {
 	sdk.UnimplementedSource
 
-	config Config
-	client elasticsearch.Client
-	// holds the last position of indexes returned by Read() method
-	offsets map[string]int
-	// hold the initial sdk position of indexes, used for Ack() method
-	positions []Position
-	ch        chan opencdc.Record
-	shutdown  chan struct{}
-	wg        *sync.WaitGroup
+	config   Config
+	client   elasticsearch.Client
+	position *Position
+	ch       chan opencdc.Record
+	shutdown chan struct{}
+	wg       *sync.WaitGroup
 }
 
 // NewSource initialises a new source.
@@ -67,9 +64,16 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	sdk.Logger(ctx).Info().Msg("Opening an ElasticSearch Source...")
 
 	var err error
-	s.positions, err = ParseSDKPosition(position)
-	if err != nil {
-		return err
+
+	if position == nil {
+		s.position = &Position{
+			IndexPositions: make(map[string]int),
+		}
+	} else {
+		s.position, err = ParseSDKPosition(position)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Initialize Elasticsearch client
@@ -85,23 +89,14 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 
 	s.ch = make(chan opencdc.Record, s.config.BatchSize)
 	s.shutdown = make(chan struct{})
-	s.offsets = make(map[string]int)
 	s.wg = &sync.WaitGroup{}
 
 	for _, index := range s.config.Indexes {
 		s.wg.Add(1)
-
-		offset := 0
-		for _, position := range s.positions {
-			if index == position.Index {
-				offset = position.Pos
-			}
-		}
-
-		s.offsets[index] = offset
+		offset, _ := s.position.IndexPositions[index]
 
 		// a new worker for a new index
-		NewWorker(s, index, offset)
+		NewWorker(ctx, s, index, offset)
 	}
 
 	return nil
@@ -120,52 +115,18 @@ func (s *Source) Read(ctx context.Context) (opencdc.Record, error) {
 		return opencdc.Record{}, fmt.Errorf("error reading data")
 	}
 
-	index, ok := record.Metadata[metadataFieldIndex]
-	if !ok {
-		// this should never happen
-		return opencdc.Record{}, fmt.Errorf("error index not found in data header")
-	}
-
-	offset, ok := s.offsets[index]
-	if !ok {
-		// this should never happen
-		return opencdc.Record{}, fmt.Errorf("error offset index not found")
-	}
-
-	s.offsets[index] = offset + 1
 	return record, nil
 }
 
 // Ack logs the debug event with the position.
-func (s *Source) Ack(_ context.Context, position opencdc.Position) error {
-	pos := Position{}
-	err := pos.unmarshal(position)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling opencdc position: %w", err)
-	}
-
-	last := s.offsets[pos.Index]
-
-	for _, p := range s.positions {
-		if p.Index == pos.Index && p.Pos > pos.Pos {
-			return fmt.Errorf("error acknowledging: position less than initial sdk position")
-		}
-	}
-
-	if last < pos.Pos {
-		return fmt.Errorf("error acknowledging: record not read")
-	}
-
+func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
+	sdk.Logger(ctx).Trace().Str("position", string(position)).Msg("got ack")
 	return nil
 }
 
 // Teardown gracefully shutdown connector.
 func (s *Source) Teardown(ctx context.Context) error {
 	sdk.Logger(ctx).Info().Msg("Tearing down the ElasticSearch Source")
-
-	if s == nil || s.ch == nil {
-		return fmt.Errorf("error source not opened for teardown")
-	}
 
 	close(s.shutdown)
 

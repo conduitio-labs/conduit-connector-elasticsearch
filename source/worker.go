@@ -35,23 +35,23 @@ type Worker struct {
 	offset int
 }
 
-// NewWorker create a new worker goroutine and starts polling elasticsearch for new records
-func NewWorker(source *Source, index string, offset int) {
+// NewWorker create a new worker goroutine and starts polling elasticsearch for new records.
+func NewWorker(ctx context.Context, source *Source, index string, offset int) {
 	worker := &Worker{
 		source: source,
 		index:  index,
 		offset: offset,
 	}
 
-	go worker.start()
+	go worker.start(ctx)
 }
 
-// start polls elasticsearch for new records and writes it into the source channel
-func (w *Worker) start() {
+// start polls elasticsearch for new records and writes it into the source channel.
+func (w *Worker) start(ctx context.Context) {
 	defer w.source.wg.Done()
 
 	for {
-		response, err := w.source.client.Search(context.Background(), w.index, &w.offset, &w.source.config.BatchSize)
+		response, err := w.source.client.Search(ctx, w.index, &w.offset, &w.source.config.BatchSize)
 		if err != nil || len(response.Hits.Hits) == 0 {
 			if err != nil {
 				log.Println("search() err:", err)
@@ -59,7 +59,7 @@ func (w *Worker) start() {
 
 			select {
 			case <-w.source.shutdown:
-				log.Println("worker shutting down...")
+				sdk.Logger(ctx).Debug().Msg("worker shutting down...")
 				return
 
 			case <-time.After(w.source.config.PollingPeriod):
@@ -75,18 +75,15 @@ func (w *Worker) start() {
 
 			payload, err := json.Marshal(hit.Source)
 			if err != nil {
-				// log
+				sdk.Logger(ctx).Err(err).Msg("error marshal payload")
 				continue
 			}
 
-			position := Position{
-				ID:    hit.ID,
-				Index: hit.Index,
-				Pos:   w.offset + 1,
-			}
-			sdkPosition, err := position.marshal()
+			w.source.position.set(hit.Index, w.offset+1)
+
+			sdkPosition, err := w.source.position.marshal()
 			if err != nil {
-				// handle
+				sdk.Logger(ctx).Err(err).Msg("error marshal position")
 				continue
 			}
 
@@ -100,7 +97,7 @@ func (w *Worker) start() {
 				w.offset++
 
 			case <-w.source.shutdown:
-				log.Println("worker shutting down...")
+				sdk.Logger(ctx).Debug().Msg("worker shutting down...")
 				return
 			}
 		}
