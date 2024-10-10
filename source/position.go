@@ -17,34 +17,36 @@ package source
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/conduitio/conduit-commons/opencdc"
 )
 
 // Position represents position of a document in an index.
 type Position struct {
-	ID    string `json:"id"`
-	Index string `json:"index"`
-	Pos   int    `json:"pos"`
+	mu             sync.Mutex
+	IndexPositions map[string]int `json:"indexPositions"`
 }
 
 // ParseSDKPosition parses opencdc.Position and returns Position.
-func ParseSDKPosition(position opencdc.Position) ([]Position, error) {
-	var pos []Position
+func ParseSDKPosition(position opencdc.Position) (*Position, error) {
+	var pos Position
 
 	if position == nil {
-		return pos, nil
+		return &pos, nil
 	}
 
 	if err := json.Unmarshal(position, &pos); err != nil {
-		return pos, fmt.Errorf("unmarshal opencdc.Position into Position: %w", err)
+		return &pos, fmt.Errorf("unmarshal opencdc.Position into Position: %w", err)
 	}
 
-	return pos, nil
+	return &pos, nil
 }
 
 // marshal marshals Position and returns opencdc.Position or an error.
-func (p Position) marshal() (opencdc.Position, error) {
+func (p *Position) marshal() (opencdc.Position, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	positionBytes, err := json.Marshal(p)
 	if err != nil {
 		return nil, fmt.Errorf("marshal position: %w", err)
@@ -53,11 +55,8 @@ func (p Position) marshal() (opencdc.Position, error) {
 	return positionBytes, nil
 }
 
-// unmarshal unmarshals opencdc.Position and retuns an error on failure.
-func (p Position) unmarshal(position opencdc.Position) error {
-	err := json.Unmarshal(position, &p)
-	if err != nil {
-		return fmt.Errorf("unmarshal position: %w", err)
-	}
-	return nil
+func (p *Position) set(index string, pos int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.IndexPositions[index] = pos
 }
