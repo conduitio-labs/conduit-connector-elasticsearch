@@ -31,7 +31,7 @@ func (Config) Parameters() map[string]config.Parameter {
 		},
 		ConfigBatchSize: {
 			Default:     "1000",
-			Description: "The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.",
+			Description: "The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10000`.",
 			Type:        config.ParameterTypeInt,
 			Validations: []config.Validation{},
 		},
@@ -68,7 +68,7 @@ func (Config) Parameters() map[string]config.Parameter {
 			Validations: []config.Validation{},
 		},
 		ConfigPollingPeriod: {
-			Default:     "1s",
+			Default:     "5s",
 			Description: "This period is used by workers to poll for new data at regular intervals.",
 			Type:        config.ParameterTypeDuration,
 			Validations: []config.Validation{},

@@ -44,7 +44,7 @@ type Config struct {
 	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10000`.
 	BatchSize int `json:"batchSize" default:"1000"`
 	// This period is used by workers to poll for new data at regular intervals.
-	PollingPeriod time.Duration `json:"pollingPeriod" default:"1s"`
+	PollingPeriod time.Duration `json:"pollingPeriod" default:"5s"`
 }
 
 func (c Config) GetHost() string {
