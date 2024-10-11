@@ -41,7 +41,8 @@ func (c *Client) Search(ctx context.Context, index string, offset, size *int) (*
 	}
 
 	// Perform the request
-	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	res, err := req.Do(ctx, c.es)
 	if err != nil {
 		return nil, fmt.Errorf("error getting search response: %w", err)

@@ -22,6 +22,13 @@ import (
 	"github.com/matryer/is"
 )
 
+func TestNewPosition(t *testing.T) {
+	is := is.New(t)
+	pos := NewPosition()
+	is.True(pos != nil)
+	is.Equal(len(pos.IndexPositions), 0)
+}
+
 func TestParseSDKPosition(t *testing.T) {
 	t.Parallel()
 
@@ -31,11 +38,6 @@ func TestParseSDKPosition(t *testing.T) {
 		wantPos *Position
 		wantErr error
 	}{
-		{
-			name:    "success_position_is_nil",
-			in:      nil,
-			wantPos: nil,
-		},
 		{
 			name: "failure_unmarshal_error",
 			in:   opencdc.Position("invalid"),
@@ -75,22 +77,22 @@ func TestMarshal(t *testing.T) {
 
 	tests := []struct {
 		name string
-		in   Position
+		in   *Position
 		want opencdc.Position
 	}{
 		{
 			name: "successful marshal",
-			in:   Position{IndexPositions: map[string]int{"a": 1, "b": 2}},
+			in:   &Position{IndexPositions: map[string]int{"a": 1, "b": 2}},
 			want: []byte(`{"indexPositions":{"a":1,"b":2}}`),
 		},
 		{
 			name: "marshal empty map",
-			in:   Position{IndexPositions: map[string]int{}},
+			in:   &Position{IndexPositions: map[string]int{}},
 			want: []byte(`{"indexPositions":{}}`),
 		},
 		{
 			name: "marshal with nil map",
-			in:   Position{IndexPositions: nil},
+			in:   &Position{IndexPositions: nil},
 			want: []byte(`{"indexPositions":null}`),
 		},
 	}
@@ -111,24 +113,24 @@ func TestUpdate(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		in          Position
+		in          *Position
 		updateIndex string
 		updatePos   int
-		want        Position
+		want        *Position
 	}{
 		{
 			name:        "update existing index",
-			in:          Position{IndexPositions: map[string]int{"a": 1, "b": 2}},
+			in:          &Position{IndexPositions: map[string]int{"a": 1, "b": 2}},
 			updateIndex: "a",
 			updatePos:   10,
-			want:        Position{IndexPositions: map[string]int{"a": 10, "b": 2}},
+			want:        &Position{IndexPositions: map[string]int{"a": 10, "b": 2}},
 		},
 		{
 			name:        "update new index",
-			in:          Position{IndexPositions: map[string]int{"a": 1}},
+			in:          &Position{IndexPositions: map[string]int{"a": 1}},
 			updateIndex: "b",
 			updatePos:   5,
-			want:        Position{IndexPositions: map[string]int{"a": 1, "b": 5}},
+			want:        &Position{IndexPositions: map[string]int{"a": 1, "b": 5}},
 		},
 	}
 	for _, tt := range tests {

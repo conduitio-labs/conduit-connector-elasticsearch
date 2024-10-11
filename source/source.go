@@ -66,9 +66,7 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	var err error
 
 	if position == nil {
-		s.position = &Position{
-			IndexPositions: make(map[string]int),
-		}
+		s.position = NewPosition()
 	} else {
 		s.position, err = ParseSDKPosition(position)
 		if err != nil {
@@ -93,7 +91,7 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 
 	for _, index := range s.config.Indexes {
 		s.wg.Add(1)
-		offset, _ := s.position.IndexPositions[index]
+		offset := s.position.IndexPositions[index]
 
 		// a new worker for a new index
 		NewWorker(ctx, s, index, offset)
@@ -127,9 +125,7 @@ func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
 // Teardown gracefully shutdown connector.
 func (s *Source) Teardown(ctx context.Context) error {
 	sdk.Logger(ctx).Info().Msg("Tearing down the ElasticSearch Source")
-
 	close(s.shutdown)
-
 	// wait for goroutines to finish
 	s.wg.Wait()
 	// close the read channel for write

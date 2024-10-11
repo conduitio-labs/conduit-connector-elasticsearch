@@ -59,7 +59,9 @@ func (Config) Parameters() map[string]config.Parameter {
 			Default:     "",
 			Description: "The name of the indexes to read data from.",
 			Type:        config.ParameterTypeString,
-			Validations: []config.Validation{},
+			Validations: []config.Validation{
+				config.ValidationRequired{},
+			},
 		},
 		ConfigPassword: {
 			Default:     "",

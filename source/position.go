@@ -28,13 +28,14 @@ type Position struct {
 	IndexPositions map[string]int `json:"indexPositions"`
 }
 
+// NewPosition initializes a new position when sdk position is nil.
+func NewPosition() *Position {
+	return &Position{IndexPositions: make(map[string]int)}
+}
+
 // ParseSDKPosition parses opencdc.Position and returns Position.
 func ParseSDKPosition(position opencdc.Position) (*Position, error) {
 	var pos Position
-
-	if position == nil {
-		return nil, nil
-	}
 
 	if err := json.Unmarshal(position, &pos); err != nil {
 		return nil, fmt.Errorf("unmarshal opencdc.Position into Position: %w", err)
