@@ -79,7 +79,7 @@ func (w *Worker) start(ctx context.Context) {
 				continue
 			}
 
-			w.source.position.set(hit.Index, w.offset+1)
+			w.source.position.update(hit.Index, w.offset+1)
 
 			sdkPosition, err := w.source.position.marshal()
 			if err != nil {

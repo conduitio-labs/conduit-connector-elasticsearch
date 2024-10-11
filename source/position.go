@@ -33,11 +33,11 @@ func ParseSDKPosition(position opencdc.Position) (*Position, error) {
 	var pos Position
 
 	if position == nil {
-		return &pos, nil
+		return nil, nil
 	}
 
 	if err := json.Unmarshal(position, &pos); err != nil {
-		return &pos, fmt.Errorf("unmarshal opencdc.Position into Position: %w", err)
+		return nil, fmt.Errorf("unmarshal opencdc.Position into Position: %w", err)
 	}
 
 	return &pos, nil
@@ -51,11 +51,11 @@ func (p *Position) marshal() (opencdc.Position, error) {
 	if err != nil {
 		return nil, fmt.Errorf("marshal position: %w", err)
 	}
-
 	return positionBytes, nil
 }
 
-func (p *Position) set(index string, pos int) {
+// update updates an index position in the source position.
+func (p *Position) update(index string, pos int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.IndexPositions[index] = pos
