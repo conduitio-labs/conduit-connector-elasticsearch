@@ -19,6 +19,5 @@ type config interface {
 	GetHost() string
 	GetUsername() string
 	GetPassword() string
-	GetIndex() string
 	GetType() string
 }

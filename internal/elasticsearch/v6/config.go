@@ -21,6 +21,5 @@ type config interface {
 	GetPassword() string
 	GetCloudID() string
 	GetAPIKey() string
-	GetIndex() string
 	GetType() string
 }

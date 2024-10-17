@@ -17,8 +17,17 @@
 package destination
 
 import (
+	"bytes"
+	"fmt"
+	"strings"
+	"text/template"
+
+	"github.com/Masterminds/sprig/v3"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	"github.com/conduitio/conduit-commons/opencdc"
 )
+
+type IndexFn func(opencdc.Record) (string, error)
 
 type Config struct {
 	// The version of the Elasticsearch service. One of: 5, 6, 7, 8.
@@ -38,7 +47,7 @@ type Config struct {
 	// SHA256 hex fingerprint given by Elasticsearch on first launch.
 	CertificateFingerprint string `json:"certificateFingerprint"`
 	// The name of the index to write the data to.
-	Index string `json:"index"`
+	Index string `json:"index" default:"{{ index .Metadata \"opencdc.collection\" }}"`
 	// The name of the index's type to write the data to.
 	Type string `json:"type"`
 	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10 000`.
@@ -75,10 +84,35 @@ func (c Config) GetCertificateFingerprint() string {
 	return c.CertificateFingerprint
 }
 
-func (c Config) GetIndex() string {
-	return c.Index
-}
-
 func (c Config) GetType() string {
 	return c.Type
+}
+
+// IndexFunction returns a function that determines the index for each record individually.
+// The function might be returning a static index name.
+// If the index is neither static nor a template, an error is returned.
+func (c Config) IndexFunction() (f IndexFn, err error) {
+	// Not a template, i.e. it's a static index name
+	if !strings.Contains(c.Index, "{{") && !strings.Contains(c.Index, "}}") {
+		return func(_ opencdc.Record) (string, error) {
+			return c.Index, nil
+		}, nil
+	}
+
+	// Try to parse the index
+	t, err := template.New("index").Funcs(sprig.FuncMap()).Parse(c.Index)
+	if err != nil {
+		// The index is not a valid Go template.
+		return nil, fmt.Errorf("index is neither a valid static index nor a valid Go template: %w", err)
+	}
+
+	// The index is a valid template, return IndexFn.
+	var buf bytes.Buffer
+	return func(r opencdc.Record) (string, error) {
+		buf.Reset()
+		if err := t.Execute(&buf, r); err != nil {
+			return "", fmt.Errorf("failed to execute index template: %w", err)
+		}
+		return buf.String(), nil
+	}, nil
 }

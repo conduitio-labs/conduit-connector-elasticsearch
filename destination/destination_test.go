@@ -29,6 +29,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const indexName = "someIndexName"
+
 func TestNewDestination(t *testing.T) {
 	t.Run("New Destination can be created", func(t *testing.T) {
 		require.IsType(t, &Destination{}, NewDestination())
@@ -53,6 +55,9 @@ func TestDestination_Write(t *testing.T) {
 
 		destination := Destination{
 			config: Config{},
+			getIndexName: func(_ opencdc.Record) (string, error) {
+				return indexName, nil
+			},
 			client: &esClientMock,
 		}
 
@@ -72,7 +77,7 @@ func TestDestination_Write(t *testing.T) {
 		)
 
 		esClientMock := clientMock{
-			PrepareCreateOperationFunc: func(_ opencdc.Record) (interface{}, interface{}, error) {
+			PrepareCreateOperationFunc: func(_ opencdc.Record, _ string) (interface{}, interface{}, error) {
 				return operationMetadata, operationPayload, nil
 			},
 
@@ -102,6 +107,9 @@ func TestDestination_Write(t *testing.T) {
 			config: Config{
 				BulkSize: 1,
 				Retries:  2,
+			},
+			getIndexName: func(_ opencdc.Record) (string, error) {
+				return indexName, nil
 			},
 			client: &esClientMock,
 		}

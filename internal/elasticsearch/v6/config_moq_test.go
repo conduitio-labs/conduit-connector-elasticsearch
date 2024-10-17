@@ -26,9 +26,6 @@ var _ config = &configMock{}
 //			GetHostFunc: func() string {
 //				panic("mock out the GetHost method")
 //			},
-//			GetIndexFunc: func() string {
-//				panic("mock out the GetIndex method")
-//			},
 //			GetPasswordFunc: func() string {
 //				panic("mock out the GetPassword method")
 //			},
@@ -54,9 +51,6 @@ type configMock struct {
 	// GetHostFunc mocks the GetHost method.
 	GetHostFunc func() string
 
-	// GetIndexFunc mocks the GetIndex method.
-	GetIndexFunc func() string
-
 	// GetPasswordFunc mocks the GetPassword method.
 	GetPasswordFunc func() string
 
@@ -77,9 +71,6 @@ type configMock struct {
 		// GetHost holds details about calls to the GetHost method.
 		GetHost []struct {
 		}
-		// GetIndex holds details about calls to the GetIndex method.
-		GetIndex []struct {
-		}
 		// GetPassword holds details about calls to the GetPassword method.
 		GetPassword []struct {
 		}
@@ -93,7 +84,6 @@ type configMock struct {
 	lockGetAPIKey   sync.RWMutex
 	lockGetCloudID  sync.RWMutex
 	lockGetHost     sync.RWMutex
-	lockGetIndex    sync.RWMutex
 	lockGetPassword sync.RWMutex
 	lockGetType     sync.RWMutex
 	lockGetUsername sync.RWMutex
@@ -177,33 +167,6 @@ func (mock *configMock) GetHostCalls() []struct {
 	mock.lockGetHost.RLock()
 	calls = mock.calls.GetHost
 	mock.lockGetHost.RUnlock()
-	return calls
-}
-
-// GetIndex calls GetIndexFunc.
-func (mock *configMock) GetIndex() string {
-	if mock.GetIndexFunc == nil {
-		panic("configMock.GetIndexFunc: method is nil but config.GetIndex was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockGetIndex.Lock()
-	mock.calls.GetIndex = append(mock.calls.GetIndex, callInfo)
-	mock.lockGetIndex.Unlock()
-	return mock.GetIndexFunc()
-}
-
-// GetIndexCalls gets all the calls that were made to GetIndex.
-// Check the length with:
-//
-//	len(mockedconfig.GetIndexCalls())
-func (mock *configMock) GetIndexCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockGetIndex.RLock()
-	calls = mock.calls.GetIndex
-	mock.lockGetIndex.RUnlock()
 	return calls
 }
 
