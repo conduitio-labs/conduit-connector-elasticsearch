@@ -20,22 +20,34 @@ import (
 	"log"
 	"time"
 
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
 type Worker struct {
-	source *Source
-	index  string
-	offset int
+	source           *Source
+	index            string
+	sortByField      string
+	orderBy          string
+	lastRecordSortID int64
 }
 
 // NewWorker create a new worker goroutine and starts polling elasticsearch for new records.
-func NewWorker(ctx context.Context, source *Source, index string, offset int) {
+func NewWorker(
+	ctx context.Context,
+	source *Source,
+	index string,
+	sortByField string,
+	orderBy string,
+	lastRecordSortID int64,
+) {
 	worker := &Worker{
-		source: source,
-		index:  index,
-		offset: offset,
+		source:           source,
+		index:            index,
+		sortByField:      sortByField,
+		orderBy:          orderBy,
+		lastRecordSortID: lastRecordSortID,
 	}
 
 	go worker.start(ctx)
@@ -46,7 +58,15 @@ func (w *Worker) start(ctx context.Context) {
 	defer w.source.wg.Done()
 
 	for {
-		response, err := w.source.client.Search(ctx, w.index, &w.offset, &w.source.config.BatchSize)
+		request := &api.SearchRequest{
+			Index:       w.index,
+			Size:        &w.source.config.BatchSize,
+			SearchAfter: w.lastRecordSortID,
+			SortBy:      w.sortByField,
+			Order:       w.orderBy,
+		}
+
+		response, err := w.source.client.Search(ctx, request)
 		if err != nil || len(response.Hits.Hits) == 0 {
 			if err != nil {
 				log.Println("search() err:", err)
@@ -74,7 +94,13 @@ func (w *Worker) start(ctx context.Context) {
 				continue
 			}
 
-			w.source.position.update(hit.Index, w.offset+1)
+			if len(hit.Sort) == 0 {
+				// this should never happen
+				sdk.Logger(ctx).Err(err).Msg("error hit.Sort is empty")
+				continue
+			}
+
+			w.source.position.update(hit.Index, hit.Sort[0])
 
 			sdkPosition, err := w.source.position.marshal()
 			if err != nil {
@@ -89,7 +115,7 @@ func (w *Worker) start(ctx context.Context) {
 
 			select {
 			case w.source.ch <- record:
-				w.offset++
+				w.lastRecordSortID = hit.Sort[0]
 
 			case <-w.source.shutdown:
 				sdk.Logger(ctx).Debug().Msg("worker shutting down...")

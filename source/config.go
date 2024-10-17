@@ -41,6 +41,10 @@ type Config struct {
 	CertificateFingerprint string `json:"certificateFingerprint"`
 	// The name of the indexes to read data from.
 	Indexes []string `json:"indexes" validate:"required"`
+	// The sortbyField for each index to be used by elasticsearch search api.
+	IndexSortFields []string `json:"indexSortFields" validate:"required"`
+	// The sortOrders for each index to be used by elasticsearch search api.
+	SortOrders []string `json:"sortOrders" validate:"required"`
 	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10000`.
 	BatchSize int `json:"batchSize" default:"1000"`
 	// This period is used by workers to poll for new data at regular intervals.

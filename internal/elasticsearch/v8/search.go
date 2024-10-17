@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -27,17 +28,12 @@ import (
 )
 
 // Search calls the elasticsearch search api and retuns SearchResponse read from an index.
-func (c *Client) Search(ctx context.Context, index string, offset, size *int) (*api.SearchResponse, error) {
+func (c *Client) Search(ctx context.Context, request *api.SearchRequest) (*api.SearchResponse, error) {
 	// Create the search request
 	req := esapi.SearchRequest{
-		Index: []string{index},
-		Body: strings.NewReader(`{
-			"query": {
-				"match_all": {}
-			}
-		}`),
-		From: offset,
-		Size: size,
+		Index: []string{request.Index},
+		Body:  strings.NewReader(createSearchBody(request.SortBy, request.Order, request.SearchAfter)),
+		Size:  request.Size,
 	}
 
 	// Perform the request
@@ -59,4 +55,26 @@ func (c *Client) Search(ctx context.Context, index string, offset, size *int) (*
 	}
 
 	return response, nil
+}
+
+func createSearchBody(sortByField, order string, searchAfter int64) string {
+	body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match_all": struct{}{},
+		},
+		"sort": []map[string]string{
+			{sortByField: order},
+		},
+	}
+
+	if searchAfter > 0 {
+		body["search_after"] = []int64{searchAfter}
+	}
+
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		log.Printf("error marshaling the search request body: %s", err)
+	}
+
+	return string(jsonBody)
 }

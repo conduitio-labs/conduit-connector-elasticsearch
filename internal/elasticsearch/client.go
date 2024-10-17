@@ -42,5 +42,5 @@ type Client interface {
 	PrepareDeleteOperation(key string) (metadata interface{}, err error)
 
 	// Search calls the elasticsearch search api and retuns SearchResponse read from an index.
-	Search(ctx context.Context, index string, offset, size *int) (*api.SearchResponse, error)
+	Search(ctx context.Context, request *api.SearchRequest) (*api.SearchResponse, error)
 }

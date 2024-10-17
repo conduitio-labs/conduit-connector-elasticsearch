@@ -13,10 +13,12 @@ const (
 	ConfigCertificateFingerprint = "certificateFingerprint"
 	ConfigCloudID                = "cloudID"
 	ConfigHost                   = "host"
+	ConfigIndexSortFields        = "indexSortFields"
 	ConfigIndexes                = "indexes"
 	ConfigPassword               = "password"
 	ConfigPollingPeriod          = "pollingPeriod"
 	ConfigServiceToken           = "serviceToken"
+	ConfigSortOrders             = "sortOrders"
 	ConfigUsername               = "username"
 	ConfigVersion                = "version"
 )
@@ -55,6 +57,14 @@ func (Config) Parameters() map[string]config.Parameter {
 				config.ValidationRequired{},
 			},
 		},
+		ConfigIndexSortFields: {
+			Default:     "",
+			Description: "The sortbyField for each index to be used by elasticsearch search api.",
+			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{
+				config.ValidationRequired{},
+			},
+		},
 		ConfigIndexes: {
 			Default:     "",
 			Description: "The name of the indexes to read data from.",
@@ -80,6 +90,14 @@ func (Config) Parameters() map[string]config.Parameter {
 			Description: "Service token for authorization; if set, overrides username/password.",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{},
+		},
+		ConfigSortOrders: {
+			Default:     "",
+			Description: "The sortOrders for each index to be used by elasticsearch search api.",
+			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{
+				config.ValidationRequired{},
+			},
 		},
 		ConfigUsername: {
 			Default:     "",

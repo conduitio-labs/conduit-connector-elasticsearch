@@ -25,12 +25,12 @@ import (
 // Position represents position of a document in an index.
 type Position struct {
 	mu             sync.Mutex
-	IndexPositions map[string]int `json:"indexPositions"`
+	IndexPositions map[string]int64 `json:"indexPositions"`
 }
 
 // NewPosition initializes a new position when sdk position is nil.
 func NewPosition() *Position {
-	return &Position{IndexPositions: make(map[string]int)}
+	return &Position{IndexPositions: make(map[string]int64)}
 }
 
 // ParseSDKPosition parses opencdc.Position and returns Position.
@@ -60,8 +60,8 @@ func (p *Position) marshal() (opencdc.Position, error) {
 }
 
 // update updates an index position in the source position.
-func (p *Position) update(index string, pos int) {
+func (p *Position) update(index string, lastRecordSortID int64) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.IndexPositions[index] = pos
+	p.IndexPositions[index] = lastRecordSortID
 }

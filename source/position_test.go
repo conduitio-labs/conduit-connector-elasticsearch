@@ -51,7 +51,7 @@ func TestParseSDKPosition(t *testing.T) {
 						"index": 10
 					}
 				}`),
-			wantPos: &Position{IndexPositions: map[string]int{"index": 10}},
+			wantPos: &Position{IndexPositions: map[string]int64{"index": 10}},
 		},
 	}
 
@@ -82,12 +82,12 @@ func TestMarshal(t *testing.T) {
 	}{
 		{
 			name: "successful marshal",
-			in:   &Position{IndexPositions: map[string]int{"a": 1, "b": 2}},
+			in:   &Position{IndexPositions: map[string]int64{"a": 1, "b": 2}},
 			want: []byte(`{"indexPositions":{"a":1,"b":2}}`),
 		},
 		{
 			name: "marshal empty map",
-			in:   &Position{IndexPositions: map[string]int{}},
+			in:   &Position{IndexPositions: map[string]int64{}},
 			want: []byte(`{"indexPositions":{}}`),
 		},
 		{
@@ -115,22 +115,22 @@ func TestUpdate(t *testing.T) {
 		name        string
 		in          *Position
 		updateIndex string
-		updatePos   int
+		updatePos   int64
 		want        *Position
 	}{
 		{
 			name:        "update existing index",
-			in:          &Position{IndexPositions: map[string]int{"a": 1, "b": 2}},
+			in:          &Position{IndexPositions: map[string]int64{"a": 1, "b": 2}},
 			updateIndex: "a",
 			updatePos:   10,
-			want:        &Position{IndexPositions: map[string]int{"a": 10, "b": 2}},
+			want:        &Position{IndexPositions: map[string]int64{"a": 10, "b": 2}},
 		},
 		{
 			name:        "update new index",
-			in:          &Position{IndexPositions: map[string]int{"a": 1}},
+			in:          &Position{IndexPositions: map[string]int64{"a": 1}},
 			updateIndex: "b",
 			updatePos:   5,
-			want:        &Position{IndexPositions: map[string]int{"a": 1, "b": 5}},
+			want:        &Position{IndexPositions: map[string]int64{"a": 1, "b": 5}},
 		},
 	}
 	for _, tt := range tests {
