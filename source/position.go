@@ -37,6 +37,10 @@ func NewPosition() *Position {
 func ParseSDKPosition(position opencdc.Position) (*Position, error) {
 	var pos Position
 
+	if position == nil {
+		return NewPosition(), nil
+	}
+
 	if err := json.Unmarshal(position, &pos); err != nil {
 		return nil, fmt.Errorf("unmarshal opencdc.Position into Position: %w", err)
 	}

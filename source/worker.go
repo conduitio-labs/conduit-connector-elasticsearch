@@ -24,11 +24,6 @@ import (
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
-const (
-	// metadataFieldIndex is a name of a record metadata field that stores a ElasticSearch Index name.
-	metadataFieldIndex = "opencdc.collection"
-)
-
 type Worker struct {
 	source *Source
 	index  string
@@ -69,7 +64,7 @@ func (w *Worker) start(ctx context.Context) {
 
 		for _, hit := range response.Hits.Hits {
 			metadata := opencdc.Metadata{
-				metadataFieldIndex: hit.Index,
+				opencdc.MetadataCollection: hit.Index,
 			}
 			metadata.SetCreatedAt(time.Now().UTC())
 

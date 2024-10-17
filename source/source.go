@@ -64,14 +64,9 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	sdk.Logger(ctx).Info().Msg("Opening an ElasticSearch Source...")
 
 	var err error
-
-	if position == nil {
-		s.position = NewPosition()
-	} else {
-		s.position, err = ParseSDKPosition(position)
-		if err != nil {
-			return err
-		}
+	s.position, err = ParseSDKPosition(position)
+	if err != nil {
+		return err
 	}
 
 	// Initialize Elasticsearch client
