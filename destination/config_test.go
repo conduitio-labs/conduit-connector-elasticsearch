@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/conduitio/conduit-commons/opencdc"
+	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/require"
 )
@@ -57,29 +58,81 @@ func TestConfig_Getters(t *testing.T) {
 	require.Equal(t, serviceToken, config.GetServiceToken())
 	require.Equal(t, certificateFingerprint, config.GetCertificateFingerprint())
 	require.Equal(t, indexType, config.GetType())
-
-	record := opencdc.Record{}
-	index, err := config.GetIndex(record)
-	require.NoError(t, err)
-	require.Equal(t, indexName, index)
 }
 
-func TestConfig_GetIndex_Template(t *testing.T) {
-	fakerInstance := faker.New()
+func TestConfig_IndexFunction(t *testing.T) {
+	t.Run("static index name", func(t *testing.T) {
+		config := Config{
+			Index: "test-index",
+		}
 
-	indexName := fakerInstance.Lorem().Word()
+		indexFn, err := config.IndexFunction()
+		require.NoError(t, err)
+		require.NotNil(t, indexFn)
 
-	config := Config{
-		Index: "{{ index .Metadata \"opencdc.collection\" }}",
-	}
+		index, err := indexFn(opencdc.Record{})
+		require.NoError(t, err)
+		require.Equal(t, "test-index", index)
 
-	record := opencdc.Record{
-		Metadata: map[string]string{
-			"opencdc.collection": indexName,
-		},
-	}
+		record := sdk.SourceUtil{}.NewRecordCreate(
+			nil,
+			map[string]string{"opencdc.collection": "other-index"},
+			nil,
+			nil,
+		)
+		index, err = indexFn(record)
+		require.NoError(t, err)
+		require.Equal(t, "test-index", index)
+	})
 
-	index, err := config.GetIndex(record)
-	require.NoError(t, err)
-	require.Equal(t, indexName, index)
+	t.Run("template with metadata", func(t *testing.T) {
+		config := Config{
+			Index: "{{ index .Metadata \"opencdc.collection\" }}",
+		}
+
+		indexFn, err := config.IndexFunction()
+		require.NoError(t, err)
+		require.NotNil(t, indexFn)
+
+		record := sdk.SourceUtil{}.NewRecordCreate(
+			nil,
+			map[string]string{"opencdc.collection": "dynamic-index"},
+			nil,
+			nil,
+		)
+		index, err := indexFn(record)
+		require.NoError(t, err)
+		require.Equal(t, "dynamic-index", index)
+
+		record = sdk.SourceUtil{}.NewRecordCreate(nil, nil, nil, nil)
+		index, err = indexFn(record)
+		require.NoError(t, err)
+		require.Equal(t, "", index)
+	})
+
+	t.Run("invalid template syntax", func(t *testing.T) {
+		config := Config{
+			Index: "{{ invalid syntax }}",
+		}
+
+		indexFn, err := config.IndexFunction()
+		require.Error(t, err)
+		require.Nil(t, indexFn)
+		require.Contains(t, err.Error(), "index is neither a valid static index nor a valid Go template")
+	})
+
+	t.Run("template with invalid function", func(t *testing.T) {
+		config := Config{
+			Index: "{{ .InvalidFunction }}",
+		}
+
+		indexFn, err := config.IndexFunction()
+		require.NoError(t, err)
+		require.NotNil(t, indexFn)
+
+		record := sdk.SourceUtil{}.NewRecordCreate(nil, nil, nil, nil)
+		_, err = indexFn(record)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to execute index template")
+	})
 }

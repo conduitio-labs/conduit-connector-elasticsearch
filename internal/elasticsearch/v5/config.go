@@ -14,13 +14,10 @@
 
 package v5
 
-import "github.com/conduitio/conduit-commons/opencdc"
-
 //go:generate moq -out config_moq_test.go . config
 type config interface {
 	GetHost() string
 	GetUsername() string
 	GetPassword() string
 	GetType() string
-	GetIndex(r opencdc.Record) (string, error)
 }

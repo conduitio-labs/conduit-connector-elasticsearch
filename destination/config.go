@@ -27,6 +27,8 @@ import (
 	"github.com/conduitio/conduit-commons/opencdc"
 )
 
+type IndexFn func(opencdc.Record) (string, error)
+
 type Config struct {
 	// The version of the Elasticsearch service. One of: 5, 6, 7, 8.
 	Version elasticsearch.Version `json:"version" validate:"required"`
@@ -86,27 +88,31 @@ func (c Config) GetType() string {
 	return c.Type
 }
 
-// GetIndex determines the index for each record individually.
+// IndexFunction returns a function that determines the index for each record individually.
 // The function might be returning a static index name.
 // If the index is neither static nor a template, an error is returned.
-func (c Config) GetIndex(r opencdc.Record) (string, error) {
+func (c Config) IndexFunction() (f IndexFn, err error) {
 	// Not a template, i.e. it's a static index name
 	if !strings.Contains(c.Index, "{{") && !strings.Contains(c.Index, "}}") {
-		return c.Index, nil
+		return func(_ opencdc.Record) (string, error) {
+			return c.Index, nil
+		}, nil
 	}
 
 	// Try to parse the index
 	t, err := template.New("index").Funcs(sprig.FuncMap()).Parse(c.Index)
 	if err != nil {
 		// The index is not a valid Go template.
-		return "", fmt.Errorf("index is neither a valid static table nor a valid Go template: %w", err)
+		return nil, fmt.Errorf("index is neither a valid static index nor a valid Go template: %w", err)
 	}
 
-	// The index is a valid template, return index
+	// The index is a valid template, return IndexFn.
 	var buf bytes.Buffer
-	buf.Reset()
-	if err := t.Execute(&buf, r); err != nil {
-		return "", fmt.Errorf("failed to execute index template: %w", err)
-	}
-	return buf.String(), nil
+	return func(r opencdc.Record) (string, error) {
+		buf.Reset()
+		if err := t.Execute(&buf, r); err != nil {
+			return "", fmt.Errorf("failed to execute index template: %w", err)
+		}
+		return buf.String(), nil
+	}, nil
 }

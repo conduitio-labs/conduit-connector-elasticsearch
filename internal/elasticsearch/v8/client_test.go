@@ -15,8 +15,6 @@
 package v8
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/conduitio/conduit-commons/opencdc"
@@ -49,11 +47,7 @@ func TestClient_GetClient(t *testing.T) {
 func TestClient_PrepareCreateOperation(t *testing.T) {
 	t.Run("Fails when payload could not be prepared", func(t *testing.T) {
 		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func(_ opencdc.Record) (string, error) {
-					return indexName, nil
-				},
-			},
+			cfg: &configMock{},
 		}
 
 		metadata, payload, err := client.PrepareCreateOperation(sdk.SourceUtil{}.NewRecordCreate(
@@ -63,79 +57,18 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 			opencdc.StructuredData{
 				"foo": complex64(1 + 2i),
 			},
-		))
+		), indexName)
 
 		require.Nil(t, metadata)
 		require.Nil(t, payload)
 		require.EqualError(t, err, "json: unsupported type: complex64")
-	})
-
-	t.Run("Fails when index name could not be determined", func(t *testing.T) {
-		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func(_ opencdc.Record) (string, error) {
-					return "", fmt.Errorf("failed to determine index")
-				},
-			},
-		}
-
-		metadata, payload, err := client.PrepareCreateOperation(sdk.SourceUtil{}.NewRecordCreate(
-			nil,
-			nil,
-			nil,
-			opencdc.StructuredData{
-				"foo": "bar",
-			},
-		))
-
-		require.Nil(t, metadata)
-		require.Nil(t, payload)
-		require.EqualError(t, err, "failed to determine index name: failed to determine index")
-	})
-
-	t.Run("Successfully prepares create operation", func(t *testing.T) {
-		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func(_ opencdc.Record) (string, error) {
-					return indexName, nil
-				},
-			},
-		}
-
-		metadata, payload, err := client.PrepareCreateOperation(sdk.SourceUtil{}.NewRecordCreate(
-			nil,
-			nil,
-			nil,
-			opencdc.StructuredData{
-				"foo": "bar",
-			},
-		))
-
-		require.NoError(t, err)
-		require.NotNil(t, metadata)
-		require.NotNil(t, payload)
-
-		expectedMetadata := bulkRequestActionAndMetadata{
-			Create: &bulkRequestCreateAction{
-				Index: indexName,
-			},
-		}
-
-		expectedPayload := bulkRequestCreateSource([]byte(`{"foo":"bar"}`))
-
-		require.Equal(t, expectedMetadata, metadata)
-		require.Equal(t, expectedPayload, payload)
 	})
 }
 
 func TestClient_PrepareUpsertOperation(t *testing.T) {
 	t.Run("Fails when payload could not be prepared", func(t *testing.T) {
 		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func(_ opencdc.Record) (string, error) {
-					return indexName, nil
-				},
-			},
+			cfg: &configMock{},
 		}
 
 		metadata, payload, err := client.PrepareUpsertOperation(
@@ -151,119 +84,24 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 					"foo": complex64(1 + 2i),
 				},
 			),
+			indexName,
 		)
 
 		require.Nil(t, metadata)
 		require.Nil(t, payload)
 		require.EqualError(t, err, "json: unsupported type: complex64")
 	})
-
-	t.Run("Fails when index name could not be determined", func(t *testing.T) {
-		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func(_ opencdc.Record) (string, error) {
-					return "", fmt.Errorf("failed to determine index")
-				},
-			},
-		}
-
-		metadata, payload, err := client.PrepareUpsertOperation(
-			"key",
-			sdk.SourceUtil{}.NewRecordUpdate(
-				nil,
-				nil,
-				nil,
-				opencdc.StructuredData{
-					"foo": "bar",
-				},
-				opencdc.StructuredData{
-					"foo": "baz",
-				},
-			),
-		)
-
-		require.Nil(t, metadata)
-		require.Nil(t, payload)
-		require.EqualError(t, err, "failed to determine index name: failed to determine index")
-	})
-
-	t.Run("Successfully prepares upsert operation", func(t *testing.T) {
-		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func(_ opencdc.Record) (string, error) {
-					return indexName, nil
-				},
-			},
-		}
-
-		metadata, payload, err := client.PrepareUpsertOperation(
-			"key",
-			sdk.SourceUtil{}.NewRecordUpdate(
-				nil,
-				nil,
-				nil,
-				opencdc.StructuredData{
-					"foo": "bar",
-				},
-				opencdc.StructuredData{
-					"foo": "baz",
-				},
-			),
-		)
-
-		require.NoError(t, err)
-		require.NotNil(t, metadata)
-		require.NotNil(t, payload)
-
-		expectedMetadata := bulkRequestActionAndMetadata{
-			Update: &bulkRequestUpdateAction{
-				ID:              "key",
-				Index:           indexName,
-				RetryOnConflict: 3,
-			},
-		}
-
-		expectedPayload := bulkRequestOptionalSource{
-			Doc:         json.RawMessage(`{"foo":"baz"}`),
-			DocAsUpsert: true,
-		}
-
-		require.Equal(t, expectedMetadata, metadata)
-		require.Equal(t, expectedPayload, payload)
-	})
 }
 
 func TestClient_PrepareDeleteOperation(t *testing.T) {
-	t.Run("Fails when index name could not be determined", func(t *testing.T) {
-		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func(_ opencdc.Record) (string, error) {
-					return "", fmt.Errorf("failed to determine index")
-				},
-			},
-		}
-
-		metadata, err := client.PrepareDeleteOperation(
-			"key",
-			sdk.SourceUtil{}.NewRecordDelete(nil, nil, nil, nil),
-		)
-
-		require.Nil(t, metadata)
-		require.EqualError(t, err, "failed to determine index name: failed to determine index")
-	})
-
 	t.Run("Successfully prepares delete operation", func(t *testing.T) {
 		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func(_ opencdc.Record) (string, error) {
-					return indexName, nil
-				},
-			},
+			cfg: &configMock{},
 		}
 
 		metadata, err := client.PrepareDeleteOperation(
 			"key",
-			sdk.SourceUtil{}.NewRecordDelete(nil, nil, nil, nil),
+			indexName,
 		)
 
 		require.NoError(t, err)
