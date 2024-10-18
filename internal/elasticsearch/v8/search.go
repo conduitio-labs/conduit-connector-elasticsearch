@@ -24,7 +24,7 @@ import (
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 
-	"github.com/elastic/go-elasticsearch/esapi"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 // Search calls the elasticsearch search api and retuns SearchResponse read from an index.
