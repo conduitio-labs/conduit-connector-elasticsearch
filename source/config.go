@@ -46,6 +46,7 @@ type Config struct {
 	// This period is used by workers to poll for new data at regular intervals.
 	PollingPeriod time.Duration `json:"pollingPeriod" default:"5s"`
 }
+
 type Sort struct {
 	// The sortbyField for each index to be used by elasticsearch search api.
 	SortBy string `json:"sortBy" validate:"required"`
