@@ -56,14 +56,6 @@ func (s *Source) Configure(ctx context.Context, cfgRaw config.Config) error {
 		return err
 	}
 
-	// custom validations
-	if len(s.config.Indexes) != len(s.config.IndexSortFields) {
-		return fmt.Errorf("each index should have a respective sort field")
-	}
-	if len(s.config.IndexSortFields) != len(s.config.SortOrders) {
-		return fmt.Errorf("each sortfield should have a respective sort order")
-	}
-
 	return nil
 }
 
@@ -92,12 +84,12 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	s.shutdown = make(chan struct{})
 	s.wg = &sync.WaitGroup{}
 
-	for i, index := range s.config.Indexes {
+	for index, sort := range s.config.Indexes {
 		s.wg.Add(1)
 		lastRecordSortID := s.position.IndexPositions[index]
 
 		// a new worker for a new index
-		NewWorker(ctx, s, index, s.config.IndexSortFields[i], s.config.SortOrders[i], lastRecordSortID)
+		NewWorker(ctx, s, index, sort.SortBy, sort.SortOrder, lastRecordSortID)
 	}
 
 	return nil

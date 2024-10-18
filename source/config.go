@@ -39,16 +39,18 @@ type Config struct {
 	ServiceToken string `json:"serviceToken"`
 	// SHA256 hex fingerprint given by Elasticsearch on first launch.
 	CertificateFingerprint string `json:"certificateFingerprint"`
-	// The name of the indexes to read data from.
-	Indexes []string `json:"indexes" validate:"required"`
-	// The sortbyField for each index to be used by elasticsearch search api.
-	IndexSortFields []string `json:"indexSortFields" validate:"required"`
-	// The sortOrders for each index to be used by elasticsearch search api.
-	SortOrders []string `json:"sortOrders" validate:"required"`
+	// The name of the indexes and sort details to read data from.
+	Indexes map[string]Sort `json:"indexes" validate:"required"`
 	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10000`.
 	BatchSize int `json:"batchSize" default:"1000"`
 	// This period is used by workers to poll for new data at regular intervals.
 	PollingPeriod time.Duration `json:"pollingPeriod" default:"5s"`
+}
+type Sort struct {
+	// The sortbyField for each index to be used by elasticsearch search api.
+	SortBy string `json:"sortBy" validate:"required"`
+	// The sortOrders(asc or desc) for each index to be used by elasticsearch search api.
+	SortOrder string `json:"sortOrder" validate:"required"`
 }
 
 func (c Config) GetHost() string {
