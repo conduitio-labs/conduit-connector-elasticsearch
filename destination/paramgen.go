@@ -57,7 +57,7 @@ func (Config) Parameters() map[string]config.Parameter {
 			},
 		},
 		ConfigIndex: {
-			Default:     "",
+			Default:     "{{ index .Metadata \"opencdc.collection\" }}",
 			Description: "The name of the index to write the data to.",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{},

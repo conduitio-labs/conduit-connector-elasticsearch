@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const indexName = "someIndexName"
+
 func TestNewClient(t *testing.T) {
 	t.Run("Fails when provided config object is invalid", func(t *testing.T) {
 		client, err := NewClient("invalid config object")
@@ -45,11 +47,7 @@ func TestClient_GetClient(t *testing.T) {
 func TestClient_PrepareCreateOperation(t *testing.T) {
 	t.Run("Fails when payload could not be prepared", func(t *testing.T) {
 		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func() string {
-					return "someIndexName"
-				},
-			},
+			cfg: &configMock{},
 		}
 
 		metadata, payload, err := client.PrepareCreateOperation(sdk.SourceUtil{}.NewRecordCreate(
@@ -59,7 +57,7 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 			opencdc.StructuredData{
 				"foo": complex64(1 + 2i),
 			},
-		))
+		), indexName)
 
 		require.Nil(t, metadata)
 		require.Nil(t, payload)
@@ -70,11 +68,7 @@ func TestClient_PrepareCreateOperation(t *testing.T) {
 func TestClient_PrepareUpsertOperation(t *testing.T) {
 	t.Run("Fails when payload could not be prepared", func(t *testing.T) {
 		client := Client{
-			cfg: &configMock{
-				GetIndexFunc: func() string {
-					return "someIndexName"
-				},
-			},
+			cfg: &configMock{},
 		}
 
 		metadata, payload, err := client.PrepareUpsertOperation(
@@ -90,10 +84,36 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 					"foo": complex64(1 + 2i),
 				},
 			),
+			indexName,
 		)
 
 		require.Nil(t, metadata)
 		require.Nil(t, payload)
 		require.EqualError(t, err, "json: unsupported type: complex64")
+	})
+}
+
+func TestClient_PrepareDeleteOperation(t *testing.T) {
+	t.Run("Successfully prepares delete operation", func(t *testing.T) {
+		client := Client{
+			cfg: &configMock{},
+		}
+
+		metadata, err := client.PrepareDeleteOperation(
+			"key",
+			indexName,
+		)
+
+		require.NoError(t, err)
+		require.NotNil(t, metadata)
+
+		expectedMetadata := bulkRequestActionAndMetadata{
+			Delete: &bulkRequestDeleteAction{
+				ID:    "key",
+				Index: indexName,
+			},
+		}
+
+		require.Equal(t, expectedMetadata, metadata)
 	})
 }
