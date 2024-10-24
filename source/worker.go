@@ -38,15 +38,11 @@ func NewWorker(
 	ctx context.Context,
 	source *Source,
 	index string,
-	sortByField string,
-	orderBy string,
 	lastRecordSortID int64,
 ) {
 	worker := &Worker{
 		source:           source,
 		index:            index,
-		sortByField:      sortByField,
-		orderBy:          orderBy,
 		lastRecordSortID: lastRecordSortID,
 	}
 
