@@ -100,11 +100,11 @@ func (c *Client) Bulk(ctx context.Context, reader io.Reader) (io.ReadCloser, err
 	return result.Body, nil
 }
 
-func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, interface{}, error) {
+func (c *Client) PrepareCreateOperation(item opencdc.Record, index string) (interface{}, interface{}, error) {
 	// Prepare metadata
 	metadata := bulkRequestActionAndMetadata{
 		Create: &bulkRequestCreateAction{
-			Index: c.cfg.GetIndex(),
+			Index: index,
 		},
 	}
 
@@ -117,12 +117,12 @@ func (c *Client) PrepareCreateOperation(item opencdc.Record) (interface{}, inter
 	return metadata, bulkRequestCreateSource(payload), nil
 }
 
-func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interface{}, interface{}, error) {
+func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record, index string) (interface{}, interface{}, error) {
 	// Prepare metadata
 	metadata := bulkRequestActionAndMetadata{
 		Update: &bulkRequestUpdateAction{
 			ID:              key,
-			Index:           c.cfg.GetIndex(),
+			Index:           index,
 			RetryOnConflict: 3,
 		},
 	}
@@ -143,11 +143,11 @@ func (c *Client) PrepareUpsertOperation(key string, item opencdc.Record) (interf
 	return metadata, payload, nil
 }
 
-func (c *Client) PrepareDeleteOperation(key string) (interface{}, error) {
+func (c *Client) PrepareDeleteOperation(key string, index string) (interface{}, error) {
 	return bulkRequestActionAndMetadata{
 		Delete: &bulkRequestDeleteAction{
 			ID:    key,
-			Index: c.cfg.GetIndex(),
+			Index: index,
 		},
 	}, nil
 }
