@@ -16,11 +16,11 @@ package api
 
 // SearchRequest is the request for calling ElasticSearch api.
 type SearchRequest struct {
-	Index       string `json:"index"`
-	Size        *int   `json:"size:"`
-	SearchAfter int64  `json:"searchAfter"`
-	SortBy      string `json:"sortBy"`
-	Order       string `json:"order"`
+	Index       string  `json:"index"`
+	Size        *int    `json:"size:"`
+	SearchAfter []int64 `json:"searchAfter"`
+	SortBy      string  `json:"sortBy"`
+	Order       string  `json:"order"`
 }
 
 // SearchResponse is the JSON response from Elasticsearch search query.

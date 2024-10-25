@@ -86,10 +86,15 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 
 	for _, index := range s.config.Indexes {
 		s.wg.Add(1)
-		lastRecordSortID := s.position.IndexPositions[index]
+		var init bool
+		lastRecordSortID, ok := s.position.IndexPositions[index]
+		if !ok {
+			// read from scratch
+			init = true
+		}
 
 		// a new worker for a new index
-		NewWorker(ctx, s, index, lastRecordSortID)
+		NewWorker(ctx, s, index, lastRecordSortID, init)
 	}
 
 	return nil

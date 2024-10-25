@@ -31,6 +31,7 @@ type Worker struct {
 	sortByField      string
 	orderBy          string
 	lastRecordSortID int64
+	init             bool
 }
 
 // NewWorker create a new worker goroutine and starts polling elasticsearch for new records.
@@ -39,11 +40,13 @@ func NewWorker(
 	source *Source,
 	index string,
 	lastRecordSortID int64,
+	init bool,
 ) {
 	worker := &Worker{
 		source:           source,
 		index:            index,
 		lastRecordSortID: lastRecordSortID,
+		init:             init,
 	}
 
 	go worker.start(ctx)
@@ -55,11 +58,15 @@ func (w *Worker) start(ctx context.Context) {
 
 	for {
 		request := &api.SearchRequest{
-			Index:       w.index,
-			Size:        &w.source.config.BatchSize,
-			SearchAfter: w.lastRecordSortID,
-			SortBy:      w.sortByField,
-			Order:       w.orderBy,
+			Index:  w.index,
+			Size:   &w.source.config.BatchSize,
+			SortBy: w.sortByField,
+			Order:  w.orderBy,
+		}
+		if w.init {
+			request.SearchAfter = []int64{}
+		} else {
+			request.SearchAfter = []int64{w.lastRecordSortID}
 		}
 
 		response, err := w.source.client.Search(ctx, request)
@@ -77,6 +84,8 @@ func (w *Worker) start(ctx context.Context) {
 				continue
 			}
 		}
+
+		w.init = false
 
 		for _, hit := range response.Hits.Hits {
 			metadata := opencdc.Metadata{

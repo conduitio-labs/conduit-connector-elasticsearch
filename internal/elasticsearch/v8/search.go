@@ -57,7 +57,7 @@ func (c *Client) Search(ctx context.Context, request *api.SearchRequest) (*api.S
 	return response, nil
 }
 
-func createSearchBody(searchAfter int64) string {
+func createSearchBody(searchAfter []int64) string {
 	body := map[string]interface{}{
 		"query": map[string]interface{}{
 			"match_all": struct{}{},
@@ -69,8 +69,8 @@ func createSearchBody(searchAfter int64) string {
 		},
 	}
 
-	if searchAfter > 0 {
-		body["search_after"] = []int64{searchAfter}
+	if len(searchAfter) == 1 {
+		body["search_after"] = searchAfter
 	}
 
 	jsonBody, err := json.Marshal(body)
