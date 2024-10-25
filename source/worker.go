@@ -17,7 +17,6 @@ package source
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
@@ -72,11 +71,12 @@ func (w *Worker) start(ctx context.Context) {
 		response, err := w.source.client.Search(ctx, request)
 		if err != nil || len(response.Hits.Hits) == 0 {
 			if err != nil {
-				log.Println("search() err:", err)
+				sdk.Logger(ctx).Err(err).Msg("worker shutting down...")
+				return
 			}
 
 			select {
-			case <-w.source.shutdown:
+			case <-ctx.Done():
 				sdk.Logger(ctx).Debug().Msg("worker shutting down...")
 				return
 
@@ -122,7 +122,7 @@ func (w *Worker) start(ctx context.Context) {
 			case w.source.ch <- record:
 				w.lastRecordSortID = hit.Sort[0]
 
-			case <-w.source.shutdown:
+			case <-ctx.Done():
 				sdk.Logger(ctx).Debug().Msg("worker shutting down...")
 				return
 			}

@@ -32,7 +32,6 @@ type Source struct {
 	client   elasticsearch.Client
 	position *Position
 	ch       chan opencdc.Record
-	shutdown chan struct{}
 	wg       *sync.WaitGroup
 }
 
@@ -81,7 +80,6 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	}
 
 	s.ch = make(chan opencdc.Record, s.config.BatchSize)
-	s.shutdown = make(chan struct{})
 	s.wg = &sync.WaitGroup{}
 
 	for _, index := range s.config.Indexes {
@@ -125,7 +123,6 @@ func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
 // Teardown gracefully shutdown connector.
 func (s *Source) Teardown(ctx context.Context) error {
 	sdk.Logger(ctx).Info().Msg("Tearing down the ElasticSearch Source")
-	close(s.shutdown)
 	// wait for goroutines to finish
 	s.wg.Wait()
 	// close the read channel for write
