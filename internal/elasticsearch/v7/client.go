@@ -167,5 +167,5 @@ func preparePayload(item *opencdc.Record) (json.RawMessage, error) {
 // Search calls the elasticsearch search api and retuns SearchResponse read from an index.
 func (c *Client) Search(_ context.Context, _ *api.SearchRequest) (*api.SearchResponse, error) {
 	// TODO: implement elasticsearch search api
-	return nil, nil //nolint:nilnil // implementation to be done
+	return nil, fmt.Errorf("method not implemented")
 }
