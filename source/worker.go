@@ -36,6 +36,7 @@ type Worker struct {
 	wg               *sync.WaitGroup
 	ch               chan opencdc.Record
 	position         *Position
+	sort             Sort
 }
 
 // NewWorker create a new worker goroutine and starts polling elasticsearch for new records.
@@ -50,6 +51,7 @@ func NewWorker(
 	wg *sync.WaitGroup,
 	ch chan opencdc.Record,
 	position *Position,
+	sort Sort,
 ) {
 	worker := &Worker{
 		client:           client,
@@ -61,6 +63,7 @@ func NewWorker(
 		wg:               wg,
 		ch:               ch,
 		position:         position,
+		sort:             sort,
 	}
 
 	go worker.start(ctx)
@@ -72,8 +75,10 @@ func (w *Worker) start(ctx context.Context) {
 
 	for {
 		request := &api.SearchRequest{
-			Index: w.index,
-			Size:  &w.batchSize,
+			Index:  w.index,
+			Size:   &w.batchSize,
+			SortBy: w.sort.SortBy,
+			Order:  w.sort.SortOrder,
 		}
 		if w.init {
 			request.SearchAfter = []int64{}

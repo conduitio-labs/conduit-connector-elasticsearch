@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v8
+package v7
 
 import (
 	"context"
@@ -24,7 +24,7 @@ import (
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 
-	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 )
 
 // Search calls the elasticsearch search api and retuns SearchResponse read from an index.

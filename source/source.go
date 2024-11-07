@@ -82,7 +82,7 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 	s.ch = make(chan opencdc.Record, s.config.BatchSize)
 	s.wg = &sync.WaitGroup{}
 
-	for _, index := range s.config.Indexes {
+	for index, sort := range s.config.Indexes {
 		s.wg.Add(1)
 		var init bool
 		lastRecordSortID, ok := s.position.IndexPositions[index]
@@ -92,7 +92,7 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 		}
 
 		// a new worker for a new index
-		NewWorker(ctx, s.client, index, lastRecordSortID, init, s.config.PollingPeriod, s.config.BatchSize, s.wg, s.ch, s.position)
+		NewWorker(ctx, s.client, index, lastRecordSortID, init, s.config.PollingPeriod, s.config.BatchSize, s.wg, s.ch, s.position, sort)
 	}
 
 	return nil

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v8
+package v5
 
 import (
 	"context"
@@ -24,11 +24,15 @@ import (
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 
-	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/v6/esapi"
 )
 
 // Search calls the elasticsearch search api and retuns SearchResponse read from an index.
 func (c *Client) Search(ctx context.Context, request *api.SearchRequest) (*api.SearchResponse, error) {
+	if request.SortBy == "_seq_no" {
+		return nil, fmt.Errorf("v5 does not support sorting using _seq_no")
+	}
+
 	// Create the search request
 	req := esapi.SearchRequest{
 		Index: []string{request.Index},
@@ -62,22 +66,11 @@ func createSearchBody(searchAfter []int64, sortBy, order string) string {
 		"query": map[string]interface{}{
 			"match_all": struct{}{},
 		},
-	}
-
-	if sortBy == "_seq_no" {
-		body["sort"] = []map[string]interface{}{
-			{
-				"_seq_no": map[string]string{
-					"order": order,
-				},
-			},
-		}
-	} else {
-		body["sort"] = []map[string]string{
+		"sort": []map[string]string{
 			{
 				sortBy: order,
 			},
-		}
+		},
 	}
 
 	if len(searchAfter) == 1 {
