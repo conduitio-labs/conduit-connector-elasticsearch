@@ -12,6 +12,7 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.15.0
 	github.com/golangci/golangci-lint v1.61.0
 	github.com/jaswdr/faker v1.19.1
+	github.com/matryer/is v1.4.1
 	github.com/matryer/moq v0.5.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/goleak v1.3.0
@@ -128,7 +129,6 @@ require (
 	github.com/maratori/testableexamples v1.0.0 // indirect
 	github.com/maratori/testpackage v1.1.1 // indirect
 	github.com/matoous/godox v0.0.0-20240105082147-c5b5e0e7c0c0 // indirect
-	github.com/matryer/is v1.4.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
