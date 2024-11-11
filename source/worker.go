@@ -37,6 +37,7 @@ type Worker struct {
 	ch               chan opencdc.Record
 	position         *Position
 	sort             Sort
+	retries          int
 }
 
 // NewWorker create a new worker goroutine and starts polling elasticsearch for new records.
@@ -52,6 +53,7 @@ func NewWorker(
 	ch chan opencdc.Record,
 	position *Position,
 	sort Sort,
+	retries int,
 ) {
 	worker := &Worker{
 		client:           client,
@@ -64,6 +66,7 @@ func NewWorker(
 		ch:               ch,
 		position:         position,
 		sort:             sort,
+		retries:          retries,
 	}
 
 	go worker.start(ctx)
@@ -72,6 +75,8 @@ func NewWorker(
 // start polls elasticsearch for new records and writes it into the source channel.
 func (w *Worker) start(ctx context.Context) {
 	defer w.wg.Done()
+
+	retries := w.retries
 
 	for {
 		request := &api.SearchRequest{
@@ -89,8 +94,12 @@ func (w *Worker) start(ctx context.Context) {
 		response, err := w.client.Search(ctx, request)
 		if err != nil || len(response.Hits.Hits) == 0 {
 			if err != nil {
-				sdk.Logger(ctx).Err(err).Msg("worker shutting down...")
-				return
+				if retries > 0 {
+					retries--
+				} else if retries == 0 {
+					sdk.Logger(ctx).Err(err).Msg("retries exhausted, worker shutting down...")
+					return
+				}
 			}
 
 			select {
@@ -99,8 +108,17 @@ func (w *Worker) start(ctx context.Context) {
 				return
 
 			case <-time.After(w.pollingPeriod):
+				if err != nil {
+					sdk.Logger(ctx).Err(err).Msg("error searching, retrying...")
+				} else {
+					sdk.Logger(ctx).Debug().Msg("no records found, continuing polling...")
+				}
 				continue
 			}
+		}
+
+		if retries < w.retries {
+			retries = w.retries
 		}
 
 		w.init = false

@@ -92,7 +92,7 @@ func (s *Source) Open(ctx context.Context, position opencdc.Position) error {
 		}
 
 		// a new worker for a new index
-		NewWorker(ctx, s.client, index, lastRecordSortID, init, s.config.PollingPeriod, s.config.BatchSize, s.wg, s.ch, s.position, sort)
+		NewWorker(ctx, s.client, index, lastRecordSortID, init, s.config.PollingPeriod, s.config.BatchSize, s.wg, s.ch, s.position, sort, s.config.Retries)
 	}
 
 	return nil

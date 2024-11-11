@@ -45,6 +45,8 @@ type Config struct {
 	BatchSize int `json:"batchSize" default:"1000"`
 	// This period is used by workers to poll for new data at regular intervals.
 	PollingPeriod time.Duration `json:"pollingPeriod" default:"5s"`
+	// The maximum number of retries of failed operations.
+	Retries int `json:"retries" default:"0"`
 }
 
 type Sort struct {

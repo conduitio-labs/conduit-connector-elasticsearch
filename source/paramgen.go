@@ -17,6 +17,7 @@ const (
 	ConfigIndexesSortOrder       = "indexes.*.sortOrder"
 	ConfigPassword               = "password"
 	ConfigPollingPeriod          = "pollingPeriod"
+	ConfigRetries                = "retries"
 	ConfigServiceToken           = "serviceToken"
 	ConfigUsername               = "username"
 	ConfigVersion                = "version"
@@ -78,6 +79,12 @@ func (Config) Parameters() map[string]config.Parameter {
 			Default:     "5s",
 			Description: "This period is used by workers to poll for new data at regular intervals.",
 			Type:        config.ParameterTypeDuration,
+			Validations: []config.Validation{},
+		},
+		ConfigRetries: {
+			Default:     "0",
+			Description: "The maximum number of retries of failed operations.",
+			Type:        config.ParameterTypeInt,
 			Validations: []config.Validation{},
 		},
 		ConfigServiceToken: {
