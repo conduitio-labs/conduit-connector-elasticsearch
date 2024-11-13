@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -32,7 +31,7 @@ func (c *Client) Search(ctx context.Context, request *api.SearchRequest) (*api.S
 	// Create the search request
 	req := esapi.SearchRequest{
 		Index: []string{request.Index},
-		Body:  strings.NewReader(createSearchBody(request.SearchAfter, request.SortBy, request.Order)),
+		Body:  strings.NewReader(api.CreateSearchBody(request.SearchAfter, request.SortBy, request.Order)),
 		Size:  request.Size,
 	}
 
@@ -55,39 +54,4 @@ func (c *Client) Search(ctx context.Context, request *api.SearchRequest) (*api.S
 	}
 
 	return response, nil
-}
-
-func createSearchBody(searchAfter []int64, sortBy, order string) string {
-	body := map[string]interface{}{
-		"query": map[string]interface{}{
-			"match_all": struct{}{},
-		},
-	}
-
-	if sortBy == "_seq_no" {
-		body["sort"] = []map[string]interface{}{
-			{
-				"_seq_no": map[string]string{
-					"order": order,
-				},
-			},
-		}
-	} else {
-		body["sort"] = []map[string]string{
-			{
-				sortBy: order,
-			},
-		}
-	}
-
-	if len(searchAfter) == 1 {
-		body["search_after"] = searchAfter
-	}
-
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		log.Printf("error marshaling the search request body: %s", err)
-	}
-
-	return string(jsonBody)
 }

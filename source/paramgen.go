@@ -59,13 +59,13 @@ func (Config) Parameters() map[string]config.Parameter {
 		},
 		ConfigIndexesSortBy: {
 			Default:     "_seq_no",
-			Description: "The sortbyField for each index to be used by elasticsearch search api.",
+			Description: "The sortby field for each index to be used by elasticsearch search api.",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{},
 		},
 		ConfigIndexesSortOrder: {
 			Default:     "asc",
-			Description: "The sortOrders(asc or desc) for each index to be used by elasticsearch search api.",
+			Description: "The sortOrder(asc or desc) for each index to be used by elasticsearch search api.",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{},
 		},

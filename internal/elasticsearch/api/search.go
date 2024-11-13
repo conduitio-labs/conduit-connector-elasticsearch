@@ -14,6 +14,11 @@
 
 package api
 
+import (
+	"encoding/json"
+	"log"
+)
+
 // SearchRequest is the request for calling ElasticSearch api.
 type SearchRequest struct {
 	Index       string  `json:"index"`
@@ -33,4 +38,40 @@ type SearchResponse struct {
 			Sort   []int64        `json:"sort"` // used for search_after
 		} `json:"hits"`
 	} `json:"hits"`
+}
+
+// CreateSearchBody creates search request body for search api.
+func CreateSearchBody(searchAfter []int64, sortBy, order string) string {
+	body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match_all": struct{}{},
+		},
+	}
+
+	if sortBy == "_seq_no" {
+		body["sort"] = []map[string]interface{}{
+			{
+				"_seq_no": map[string]string{
+					"order": order,
+				},
+			},
+		}
+	} else {
+		body["sort"] = []map[string]string{
+			{
+				sortBy: order,
+			},
+		}
+	}
+
+	if len(searchAfter) == 1 {
+		body["search_after"] = searchAfter
+	}
+
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		log.Printf("error marshaling the search request body: %s", err)
+	}
+
+	return string(jsonBody)
 }

@@ -50,9 +50,9 @@ type Config struct {
 }
 
 type Sort struct {
-	// The sortbyField for each index to be used by elasticsearch search api.
+	// The sortby field for each index to be used by elasticsearch search api.
 	SortBy string `json:"sortBy" default:"_seq_no"`
-	// The sortOrders(asc or desc) for each index to be used by elasticsearch search api.
+	// The sortOrder(asc or desc) for each index to be used by elasticsearch search api.
 	SortOrder string `json:"sortOrder" default:"asc"`
 }
 
