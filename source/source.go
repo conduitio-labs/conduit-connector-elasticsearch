@@ -106,12 +106,15 @@ func (s *Source) Read(ctx context.Context) (opencdc.Record, error) {
 		return opencdc.Record{}, fmt.Errorf("error source not opened for reading")
 	}
 
-	record, ok := <-s.ch
-	if !ok {
-		return opencdc.Record{}, fmt.Errorf("error reading data")
+	select {
+	case <-ctx.Done():
+		return opencdc.Record{}, ctx.Err()
+	case record, ok := <-s.ch:
+		if !ok {
+			return opencdc.Record{}, fmt.Errorf("error reading data")
+		}
+		return record, nil
 	}
-
-	return record, nil
 }
 
 // Ack logs the debug event with the position.
