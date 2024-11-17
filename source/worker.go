@@ -36,6 +36,8 @@ type Worker struct {
 	wg               *sync.WaitGroup
 	ch               chan opencdc.Record
 	position         *Position
+	sort             Sort
+	retries          int
 }
 
 // NewWorker create a new worker goroutine and starts polling elasticsearch for new records.
@@ -50,6 +52,8 @@ func NewWorker(
 	wg *sync.WaitGroup,
 	ch chan opencdc.Record,
 	position *Position,
+	sort Sort,
+	retries int,
 ) {
 	worker := &Worker{
 		client:           client,
@@ -61,6 +65,8 @@ func NewWorker(
 		wg:               wg,
 		ch:               ch,
 		position:         position,
+		sort:             sort,
+		retries:          retries,
 	}
 
 	go worker.start(ctx)
@@ -70,10 +76,14 @@ func NewWorker(
 func (w *Worker) start(ctx context.Context) {
 	defer w.wg.Done()
 
+	retries := w.retries
+
 	for {
 		request := &api.SearchRequest{
-			Index: w.index,
-			Size:  &w.batchSize,
+			Index:  w.index,
+			Size:   &w.batchSize,
+			SortBy: w.sort.SortBy,
+			Order:  w.sort.SortOrder,
 		}
 		if w.init {
 			request.SearchAfter = []int64{}
@@ -83,8 +93,10 @@ func (w *Worker) start(ctx context.Context) {
 
 		response, err := w.client.Search(ctx, request)
 		if err != nil || len(response.Hits.Hits) == 0 {
-			if err != nil {
-				sdk.Logger(ctx).Err(err).Msg("worker shutting down...")
+			if err != nil && retries > 0 {
+				retries--
+			} else if err != nil && retries == 0 {
+				sdk.Logger(ctx).Err(err).Msg("retries exhausted, worker shutting down...")
 				return
 			}
 
@@ -94,51 +106,65 @@ func (w *Worker) start(ctx context.Context) {
 				return
 
 			case <-time.After(w.pollingPeriod):
+				if err != nil {
+					sdk.Logger(ctx).Err(err).Msg("error searching, retrying...")
+				} else {
+					sdk.Logger(ctx).Debug().Msg("no records found, continuing polling...")
+				}
 				continue
 			}
 		}
 
+		if retries < w.retries {
+			retries = w.retries
+		}
+
 		w.init = false
 
-		for _, hit := range response.Hits.Hits {
-			metadata := opencdc.Metadata{
-				opencdc.MetadataCollection: hit.Index,
-			}
-			metadata.SetCreatedAt(time.Now().UTC())
+		w.handleResponse(ctx, response)
+	}
+}
 
-			payload, err := json.Marshal(hit.Source)
-			if err != nil {
-				sdk.Logger(ctx).Err(err).Msg("error marshal payload")
-				continue
-			}
+// handleResponse handles the search response and writes data to channel.
+func (w *Worker) handleResponse(ctx context.Context, response *api.SearchResponse) {
+	for _, hit := range response.Hits.Hits {
+		metadata := opencdc.Metadata{
+			opencdc.MetadataCollection: hit.Index,
+		}
+		metadata.SetCreatedAt(time.Now().UTC())
 
-			if len(hit.Sort) == 0 {
-				// this should never happen
-				sdk.Logger(ctx).Err(err).Msg("error hit.Sort is empty")
-				continue
-			}
+		payload, err := json.Marshal(hit.Source)
+		if err != nil {
+			sdk.Logger(ctx).Err(err).Msg("error marshal payload")
+			continue
+		}
 
-			w.position.update(hit.Index, hit.Sort[0])
+		if len(hit.Sort) == 0 {
+			// this should never happen
+			sdk.Logger(ctx).Err(err).Msg("error hit.Sort is empty")
+			continue
+		}
 
-			sdkPosition, err := w.position.marshal()
-			if err != nil {
-				sdk.Logger(ctx).Err(err).Msg("error marshal position")
-				continue
-			}
+		w.position.update(hit.Index, hit.Sort[0])
 
-			key := make(opencdc.StructuredData)
-			key["id"] = hit.ID
+		sdkPosition, err := w.position.marshal()
+		if err != nil {
+			sdk.Logger(ctx).Err(err).Msg("error marshal position")
+			continue
+		}
 
-			record := sdk.Util.Source.NewRecordCreate(sdkPosition, metadata, key, opencdc.RawData(payload))
+		key := make(opencdc.StructuredData)
+		key["id"] = hit.ID
 
-			select {
-			case w.ch <- record:
-				w.lastRecordSortID = hit.Sort[0]
+		record := sdk.Util.Source.NewRecordCreate(sdkPosition, metadata, key, opencdc.RawData(payload))
 
-			case <-ctx.Done():
-				sdk.Logger(ctx).Debug().Msg("worker shutting down...")
-				return
-			}
+		select {
+		case w.ch <- record:
+			w.lastRecordSortID = hit.Sort[0]
+
+		case <-ctx.Done():
+			sdk.Logger(ctx).Debug().Msg("worker shutting down...")
+			return
 		}
 	}
 }

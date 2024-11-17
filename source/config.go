@@ -39,12 +39,21 @@ type Config struct {
 	ServiceToken string `json:"serviceToken"`
 	// SHA256 hex fingerprint given by Elasticsearch on first launch.
 	CertificateFingerprint string `json:"certificateFingerprint"`
-	// The name of the indexes to read data from.
-	Indexes []string `json:"indexes" validate:"required"`
+	// The name of the indexes and sort details to read data from.
+	Indexes map[string]Sort `json:"indexes" validate:"required"`
 	// The number of items stored in bulk in the index. The minimum value is `1`, maximum value is `10000`.
 	BatchSize int `json:"batchSize" default:"1000"`
 	// This period is used by workers to poll for new data at regular intervals.
 	PollingPeriod time.Duration `json:"pollingPeriod" default:"5s"`
+	// The maximum number of retries of failed operations.
+	Retries int `json:"retries" default:"0"`
+}
+
+type Sort struct {
+	// The sortby field for each index to be used by elasticsearch search api.
+	SortBy string `json:"sortBy" default:"_seq_no"`
+	// The sortOrder(asc or desc) for each index to be used by elasticsearch search api.
+	SortOrder string `json:"sortOrder" default:"asc"`
 }
 
 func (c Config) GetHost() string {
@@ -76,5 +85,9 @@ func (c Config) GetCertificateFingerprint() string {
 }
 
 func (c Config) GetIndex() string {
+	return "" // Only for Config to implement the elasticsearch/internal/config
+}
+
+func (c Config) GetType() string {
 	return "" // Only for Config to implement the elasticsearch/internal/config
 }

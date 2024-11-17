@@ -13,9 +13,11 @@ const (
 	ConfigCertificateFingerprint = "certificateFingerprint"
 	ConfigCloudID                = "cloudID"
 	ConfigHost                   = "host"
-	ConfigIndexes                = "indexes"
+	ConfigIndexesSortBy          = "indexes.*.sortBy"
+	ConfigIndexesSortOrder       = "indexes.*.sortOrder"
 	ConfigPassword               = "password"
 	ConfigPollingPeriod          = "pollingPeriod"
+	ConfigRetries                = "retries"
 	ConfigServiceToken           = "serviceToken"
 	ConfigUsername               = "username"
 	ConfigVersion                = "version"
@@ -55,13 +57,17 @@ func (Config) Parameters() map[string]config.Parameter {
 				config.ValidationRequired{},
 			},
 		},
-		ConfigIndexes: {
-			Default:     "",
-			Description: "The name of the indexes to read data from.",
+		ConfigIndexesSortBy: {
+			Default:     "_seq_no",
+			Description: "The sortby field for each index to be used by elasticsearch search api.",
 			Type:        config.ParameterTypeString,
-			Validations: []config.Validation{
-				config.ValidationRequired{},
-			},
+			Validations: []config.Validation{},
+		},
+		ConfigIndexesSortOrder: {
+			Default:     "asc",
+			Description: "The sortOrder(asc or desc) for each index to be used by elasticsearch search api.",
+			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{},
 		},
 		ConfigPassword: {
 			Default:     "",
@@ -73,6 +79,12 @@ func (Config) Parameters() map[string]config.Parameter {
 			Default:     "5s",
 			Description: "This period is used by workers to poll for new data at regular intervals.",
 			Type:        config.ParameterTypeDuration,
+			Validations: []config.Validation{},
+		},
+		ConfigRetries: {
+			Default:     "0",
+			Description: "The maximum number of retries of failed operations.",
+			Type:        config.ParameterTypeInt,
 			Validations: []config.Validation{},
 		},
 		ConfigServiceToken: {

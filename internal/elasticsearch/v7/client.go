@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	"github.com/conduitio/conduit-commons/opencdc"
 
 	"github.com/elastic/go-elasticsearch/v7"
@@ -162,10 +161,4 @@ func preparePayload(item *opencdc.Record) (json.RawMessage, error) {
 		// Nothing more can be done, we can trust the source to provide valid JSON
 		return itemPayload.Bytes(), nil
 	}
-}
-
-// Search calls the elasticsearch search api and retuns SearchResponse read from an index.
-func (c *Client) Search(_ context.Context, _ *api.SearchRequest) (*api.SearchResponse, error) {
-	// TODO: implement elasticsearch search api
-	return nil, fmt.Errorf("method not implemented")
 }
