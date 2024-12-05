@@ -26,6 +26,7 @@ import (
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	v7 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v7"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/test"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	esV7 "github.com/elastic/go-elasticsearch/v7"
@@ -35,7 +36,7 @@ import (
 
 func TestOperationsWithSmallestBulkSize(t *testing.T) {
 	fakerInstance := faker.New()
-	dest := destination.NewDestination().(*destination.Destination)
+	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
 		destination.ConfigVersion:  elasticsearch.Version7,
@@ -48,7 +49,11 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
 	require.NoError(t, dest.Open(context.Background()))
 
-	esClient := dest.GetClient().(*v7.Client).GetClient()
+	client, err := test.GetClient(cfgRaw)
+	if err != nil {
+		t.Logf("failed to create elasticsearch client: %v", err)
+	}
+	esClient := client.(*v7.Client).GetClient()
 
 	require.True(t, assertIndexIsDeleted(esClient, "users"))
 
@@ -263,7 +268,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 
 func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	fakerInstance := faker.New()
-	dest := destination.NewDestination().(*destination.Destination)
+	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
 		destination.ConfigVersion:  elasticsearch.Version7,
@@ -276,7 +281,11 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
 	require.NoError(t, dest.Open(context.Background()))
 
-	esClient := dest.GetClient().(*v7.Client).GetClient()
+	client, err := test.GetClient(cfgRaw)
+	if err != nil {
+		t.Logf("failed to create elasticsearch client: %v", err)
+	}
+	esClient := client.(*v7.Client).GetClient()
 
 	require.True(t, assertIndexIsDeleted(esClient, "users"))
 

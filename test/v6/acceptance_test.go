@@ -24,6 +24,7 @@ import (
 	esDestination "github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	v6 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v6"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/test"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.uber.org/goleak"
@@ -60,14 +61,17 @@ func (d *CustomConfigurableAcceptanceTestDriver) ReadFromDestination(_ *testing.
 }
 
 func TestAcceptance(t *testing.T) {
-	var dest *esDestination.Destination
-
 	destinationConfig := map[string]string{
 		esDestination.ConfigVersion:  elasticsearch.Version6,
 		esDestination.ConfigHost:     "http://127.0.0.1:9200",
 		esDestination.ConfigIndex:    "acceptance_idx",
 		esDestination.ConfigType:     "acceptance_type",
 		esDestination.ConfigBulkSize: "100",
+	}
+
+	client, err := test.GetClient(destinationConfig)
+	if err != nil {
+		t.Logf("error creating client: %v", err)
 	}
 
 	sdk.AcceptanceTest(t, &CustomConfigurableAcceptanceTestDriver{
@@ -78,17 +82,13 @@ func TestAcceptance(t *testing.T) {
 
 					NewSource: nil,
 
-					NewDestination: func() sdk.Destination {
-						dest = esDestination.NewDestination().(*esDestination.Destination)
-
-						return dest
-					},
+					NewDestination: esDestination.NewDestination,
 				},
 
 				DestinationConfig: destinationConfig,
 
 				AfterTest: func(_ *testing.T) {
-					if client := dest.GetClient(); client != nil {
+					if client != nil {
 						assertIndexIsDeleted(
 							client.(*v6.Client).GetClient(),
 							destinationConfig[esDestination.ConfigIndex],
