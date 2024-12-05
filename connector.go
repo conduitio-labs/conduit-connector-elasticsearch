@@ -16,12 +16,12 @@ package elasticsearch
 
 import (
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/source"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/esSource"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
 var Connector = sdk.Connector{
 	NewSpecification: Specification,
-	NewSource:        source.NewSource,
+	NewSource:        esSource.NewSource,
 	NewDestination:   destination.NewDestination,
 }
