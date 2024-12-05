@@ -28,7 +28,7 @@ import (
 )
 
 func NewDestination() sdk.Destination {
-	return &Destination{}
+	return sdk.DestinationWithMiddleware(&Destination{}, sdk.DefaultDestinationMiddleware()...)
 }
 
 type Destination struct {
