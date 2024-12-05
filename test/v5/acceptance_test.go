@@ -15,7 +15,6 @@
 package v5
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"testing"
@@ -61,8 +60,7 @@ func (d *CustomConfigurableAcceptanceTestDriver) ReadFromDestination(_ *testing.
 }
 
 func TestAcceptance(t *testing.T) {
-	ctx := context.Background()
-	cfg := esDestination.Config{}
+	var dest *esDestination.Destination
 
 	destinationConfig := map[string]string{
 		esDestination.ConfigVersion:  elasticsearch.Version5,
@@ -71,29 +69,26 @@ func TestAcceptance(t *testing.T) {
 		esDestination.ConfigType:     "acceptance_type",
 		esDestination.ConfigBulkSize: "100",
 	}
-	err := sdk.Util.ParseConfig(ctx, destinationConfig, &cfg, esDestination.NewDestination().Parameters())
-	if err != nil {
-		t.Logf("error parsing config: %v", err)
-	}
-
-	client, err := elasticsearch.NewClient(cfg.Version, cfg)
-	if err != nil {
-		t.Logf("error creating client: %v", err)
-	}
 
 	sdk.AcceptanceTest(t, &CustomConfigurableAcceptanceTestDriver{
 		ConfigurableAcceptanceTestDriver: sdk.ConfigurableAcceptanceTestDriver{
 			Config: sdk.ConfigurableAcceptanceTestDriverConfig{
 				Connector: sdk.Connector{
 					NewSpecification: es.Specification,
-					NewSource:        nil,
-					NewDestination:   esDestination.NewDestination,
+
+					NewSource: nil,
+
+					NewDestination: func() sdk.Destination {
+						dest = esDestination.NewDestination().(*esDestination.Destination)
+
+						return dest
+					},
 				},
 
 				DestinationConfig: destinationConfig,
 
 				AfterTest: func(_ *testing.T) {
-					if client != nil {
+					if client := dest.GetClient(); client != nil {
 						assertIndexIsDeleted(
 							client.(*v5.Client).GetClient(),
 							destinationConfig[esDestination.ConfigIndex],

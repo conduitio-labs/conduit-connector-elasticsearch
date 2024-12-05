@@ -14,7 +14,7 @@
 
 //go:generate paramgen -output=paramgen.go Config
 
-package esSource
+package source
 
 import (
 	"time"
