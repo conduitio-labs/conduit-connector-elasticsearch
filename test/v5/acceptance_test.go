@@ -15,7 +15,6 @@
 package v5
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"testing"
@@ -25,6 +24,7 @@ import (
 	esDestination "github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	v5 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v5"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/test"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.uber.org/goleak"
@@ -61,9 +61,6 @@ func (d *CustomConfigurableAcceptanceTestDriver) ReadFromDestination(_ *testing.
 }
 
 func TestAcceptance(t *testing.T) {
-	ctx := context.Background()
-	cfg := esDestination.Config{}
-
 	destinationConfig := map[string]string{
 		esDestination.ConfigVersion:  elasticsearch.Version5,
 		esDestination.ConfigHost:     "http://127.0.0.1:9200",
@@ -71,12 +68,8 @@ func TestAcceptance(t *testing.T) {
 		esDestination.ConfigType:     "acceptance_type",
 		esDestination.ConfigBulkSize: "100",
 	}
-	err := sdk.Util.ParseConfig(ctx, destinationConfig, &cfg, esDestination.NewDestination().Parameters())
-	if err != nil {
-		t.Logf("error parsing config: %v", err)
-	}
 
-	client, err := elasticsearch.NewClient(cfg.Version, cfg)
+	client, err := test.GetClient(destinationConfig)
 	if err != nil {
 		t.Logf("error creating client: %v", err)
 	}

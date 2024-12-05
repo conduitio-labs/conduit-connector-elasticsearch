@@ -26,6 +26,7 @@ import (
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	v5 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v5"
+	"github.com/conduitio-labs/conduit-connector-elasticsearch/test"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	esV5 "github.com/elastic/go-elasticsearch/v5"
@@ -35,7 +36,7 @@ import (
 
 func TestOperationsWithSmallestBulkSize(t *testing.T) {
 	fakerInstance := faker.New()
-	dest := destination.NewDestination().(*destination.Destination)
+	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
 		destination.ConfigVersion:  elasticsearch.Version5,
@@ -45,10 +46,14 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 		destination.ConfigBulkSize: "1",
 	}
 
+	client, err := test.GetClient(cfgRaw)
+	if err != nil {
+		t.Logf("failed to create elasticsearch client: %v", err)
+	}
+	esClient := client.(*v5.Client).GetClient()
+
 	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
 	require.NoError(t, dest.Open(context.Background()))
-
-	esClient := dest.GetClient().(*v5.Client).GetClient()
 
 	require.True(t, assertIndexIsDeleted(esClient, "users"))
 
@@ -263,7 +268,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 
 func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	fakerInstance := faker.New()
-	dest := destination.NewDestination().(*destination.Destination)
+	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
 		destination.ConfigVersion:  elasticsearch.Version5,
@@ -273,10 +278,14 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 		destination.ConfigBulkSize: "3",
 	}
 
+	client, err := test.GetClient(cfgRaw)
+	if err != nil {
+		t.Logf("failed to create elasticsearch client: %v", err)
+	}
+	esClient := client.(*v5.Client).GetClient()
+
 	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
 	require.NoError(t, dest.Open(context.Background()))
-
-	esClient := dest.GetClient().(*v5.Client).GetClient()
 
 	require.True(t, assertIndexIsDeleted(esClient, "users"))
 
