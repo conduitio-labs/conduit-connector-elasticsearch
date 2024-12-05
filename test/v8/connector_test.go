@@ -268,7 +268,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 
 func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	fakerInstance := faker.New()
-	dest := destination.NewDestination().(*destination.Destination)
+	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
 		destination.ConfigVersion:  elasticsearch.Version8,
