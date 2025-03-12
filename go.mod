@@ -1,6 +1,7 @@
 module github.com/conduitio-labs/conduit-connector-elasticsearch
 
 go 1.23.2
+toolchain go1.24.1
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
@@ -13,7 +14,7 @@ require (
 	github.com/golangci/golangci-lint v1.64.7
 	github.com/jaswdr/faker v1.19.1
 	github.com/matryer/is v1.4.1
-	github.com/matryer/moq v0.5.2
+	github.com/matryer/moq v0.5.3
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/goleak v1.3.0
 )
