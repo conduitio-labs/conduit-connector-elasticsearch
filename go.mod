@@ -10,7 +10,7 @@ require (
 	github.com/elastic/go-elasticsearch/v6 v6.8.10
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elastic/go-elasticsearch/v8 v8.17.1
-	github.com/golangci/golangci-lint v1.64.7
+	github.com/golangci/golangci-lint v1.64.8
 	github.com/jaswdr/faker v1.19.1
 	github.com/matryer/is v1.4.1
 	github.com/matryer/moq v0.5.2
