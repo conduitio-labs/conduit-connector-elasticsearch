@@ -1,34 +1,6 @@
-run:
-  timeout: 5m
-
-linters-settings:
-  nolintlint:
-    allow-unused: false # report any unused nolint directives
-    require-explanation: true # require an explanation for nolint directives
-    require-specific: true # require nolint directives to mention the specific linter being suppressedgoconst:
-  wrapcheck:
-    ignoreSigs:
-      - .Errorf(
-      - errors.New(
-      - errors.Unwrap(
-      - errors.Join(
-      - .Wrap(
-      - .Wrapf(
-      - .WithMessage(
-      - .WithMessagef(
-      - .WithStack(
-      - (context.Context).Err()
-  goheader:
-    template-path: '.golangci.goheader.template'
-    values:
-      regexp:
-        copyright-year: 20[2-9]\d
-
-
+version: "2"
 linters:
-  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-  disable-all: true
+  default: none
   enable:
     - asasalint
     - asciicheck
@@ -38,7 +10,6 @@ linters:
     - contextcheck
     - copyloopvar
     - decorder
-    # - depguard
     - dogsled
     - dupl
     - dupword
@@ -48,65 +19,90 @@ linters:
     - errname
     - errorlint
     - exhaustive
-    # - exhaustivestruct
-    # - forbidigo
-    # - forcetypeassert
+    - gocheckcompilerdirectives
     - gochecknoinits
+    - gocognit
     - goconst
     - gocritic
     - godot
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
-    - revive
-    - gocheckcompilerdirectives
-    - gocognit
-    - grouper
-    - interfacebloat
-    # - gomnd
     - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
-    # - ifshort
-    - ineffassign
+    - grouper
     - importas
-    # - lllmisspell
-    - nakedret
-    - nilerr
-    - nilnil
-    # - nlreturn
-    - noctx
-    - nolintlint
-    # - paralleltest
-    - predeclared
-    - rowserrcheck
-    - staticcheck
-    - stylecheck
-    - sqlclosecheck
-    # - tagliatelle
-    - tenv
-    # - thelper
-    # - tparallel
+    - ineffassign
+    - interfacebloat
+    - loggercheck
+    - maintidx
     - mirror
     - musttag
+    - nakedret
     - nestif
-    - typecheck
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - testableexamples
     - unconvert
     - unparam
     - unused
+    - usestdlibvars
     - wastedassign
     - whitespace
-    - loggercheck
-    - maintidx
-    - nosprintfhostport
-    - prealloc
-    - promlinter
-    - reassign
-    - testableexamples
-    - unconvert
-    - usestdlibvars
     - zerologlint
+  settings:
+    goheader:
+      values:
+        regexp:
+          copyright-year: 20[2-9]\d
+      template-path: .golangci.goheader.template
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
+    wrapcheck:
+      ignore-sigs:
+        - .Errorf(
+        - errors.New(
+        - errors.Unwrap(
+        - errors.Join(
+        - .Wrap(
+        - .Wrapf(
+        - .WithMessage(
+        - .WithMessagef(
+        - .WithStack(
+        - (context.Context).Err()
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
