@@ -1,7 +1,8 @@
 module github.com/conduitio-labs/conduit-connector-elasticsearch
 
-go 1.23.2
-toolchain go1.24.1
+go 1.24
+
+toolchain go1.24.2
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
