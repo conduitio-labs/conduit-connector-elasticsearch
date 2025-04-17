@@ -9,7 +9,7 @@ require (
 	github.com/elastic/go-elasticsearch/v5 v5.6.1
 	github.com/elastic/go-elasticsearch/v6 v6.8.10
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
-	github.com/elastic/go-elasticsearch/v8 v8.17.1
+	github.com/elastic/go-elasticsearch/v8 v8.18.0
 	github.com/jaswdr/faker v1.19.1
 	github.com/matryer/is v1.4.1
 	github.com/stretchr/testify v1.10.0
@@ -58,7 +58,7 @@ require (
 	github.com/daixiang0/gci v0.13.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/denis-tingaikin/go-header v0.5.0 // indirect
-	github.com/elastic/elastic-transport-go/v8 v8.6.1 // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
 	github.com/ettle/strcase v0.2.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
