@@ -12,7 +12,7 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.19.0
 	github.com/jaswdr/faker v1.19.1
 	github.com/matryer/is v1.4.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	go.uber.org/goleak v1.3.0
 )
 
