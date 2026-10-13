@@ -1,0 +1,8 @@
+Conduit Connector for Elasticsearch
+Copyright 2022 Meroxa, Inc.
+
+This connector originated as a contribution by Miquido
+(https://github.com/miquido/conduit-connector-elasticsearch),
+Copyright 2022 Miquido, and was later transferred to the conduitio-labs
+organization. Source files contributed by Miquido remain subject to the
+Apache License, Version 2.0 (see LICENSE.md).
