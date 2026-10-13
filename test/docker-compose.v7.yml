@@ -1,6 +1,6 @@
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.29
     environment:
       node.name: 'elasticsearch-v7'
       cluster.name: 'es-v7-docker-cluster'
