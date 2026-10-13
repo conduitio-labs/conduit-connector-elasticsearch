@@ -5,35 +5,27 @@ VERSION=$(shell git describe --tags --dirty --always)
 build:
 	go build -ldflags "-X 'github.com/conduitio-labs/conduit-connector-elasticsearch.version=${VERSION}'" -o conduit-connector-elasticsearch cmd/connector/main.go
 
-# Run required docker containers, execute integration tests, stop containers after tests
-test:
-	# Tests that does not require Docker services to be running
-	go test -race $(go list ./... | grep -Fv '/test/v')
+ES_VERSIONS := 5 6 7 8
 
-	# Elasticsearch v5
-	docker compose -f test/docker-compose.v5.yml -p test-v5 up --quiet-pull -d --wait
-	go test $(GOTEST_FLAGS) -race ./test/v5; ret=$$?; \
-	  	docker compose -f test/docker-compose.v5.yml -p test-v5 down; \
-	  	if [ $$ret -ne 0 ]; then exit $$ret; fi
+# Run unit tests, then the integration tests against every supported
+# Elasticsearch version. Containers are always stopped (and their logs dumped
+# when they fail to become healthy), so a failing job is diagnosable from CI logs.
+test: test-unit $(addprefix test-es-,$(ES_VERSIONS))
 
-	# Elasticsearch v6
-	docker compose -f test/docker-compose.v6.yml -p test-v6 up --quiet-pull -d --wait
-	go test $(GOTEST_FLAGS) -race ./test/v6; ret=$$?; \
-	  	docker compose -f test/docker-compose.v6.yml -p test-v6 down; \
-	  	if [ $$ret -ne 0 ]; then exit $$ret; fi
+# Tests that do not require Docker services to be running
+.PHONY: test-unit
+test-unit:
+	go test $(GOTEST_FLAGS) -race $$(go list ./... | grep -Fv '/test/v')
 
-	# Elasticsearch v7
-	docker compose -f test/docker-compose.v7.yml -p test-v7 up --quiet-pull -d --wait
-	go test $(GOTEST_FLAGS) -race ./test/v7; ret=$$?; \
-	  	docker compose -f test/docker-compose.v7.yml -p test-v7 down; \
-	  	if [ $$ret -ne 0 ]; then exit $$ret; fi
-
-	# Elasticsearch v8
-	docker compose -f test/docker-compose.v8.yml -p test-v8 up --quiet-pull -d --wait
-	go test $(GOTEST_FLAGS) -race ./test/v8; ret=$$?; \
-	  	docker compose -f test/docker-compose.v8.yml -p test-v8 down; \
-	  	if [ $$ret -ne 0 ]; then exit $$ret; fi
-
+# Elasticsearch integration tests (one version), e.g. `make test-es-8`
+test-es-%:
+	@echo "# Elasticsearch v$*"
+	docker compose -f test/docker-compose.v$*.yml -p test-v$* up --quiet-pull -d --wait \
+		|| { docker compose -f test/docker-compose.v$*.yml -p test-v$* logs --no-color; \
+		     docker compose -f test/docker-compose.v$*.yml -p test-v$* down -v; exit 1; }
+	go test $(GOTEST_FLAGS) -race ./test/v$*; ret=$$?; \
+		docker compose -f test/docker-compose.v$*.yml -p test-v$* down -v; \
+		exit $$ret
 
 .PHONY: install-tools
 install-tools:

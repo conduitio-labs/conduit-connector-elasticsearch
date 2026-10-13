@@ -33,7 +33,9 @@ const indexName = "someIndexName"
 
 func TestNewDestination(t *testing.T) {
 	t.Run("New Destination can be created", func(t *testing.T) {
-		require.IsType(t, &Destination{}, NewDestination())
+		// NewDestination wraps the connector in the SDK middleware, so the
+		// concrete type is not *Destination.
+		require.NotNil(t, NewDestination())
 	})
 }
 
