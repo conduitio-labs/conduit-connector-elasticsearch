@@ -45,6 +45,7 @@ The destination is at-least-once. A batch is sent as one bulk request, and a rec
 - Records without a key use `create` with a generated ID, so a replay stores them twice.
 - With a dead-letter queue configured, one rejected item sends the whole tail of the batch (`batch[n:]`) to the DLQ, each record carrying the error of record `n`, including records Elasticsearch did store.
 - Each of those tail records counts against `dlq.window-nack-threshold`.
+- Routing is not supported. If documents were written with routing that the connector's delete does not send (by another writer, through a routed alias, or when deleting through the base index), Elasticsearch answers the delete with 404 `not_found` from the wrong shard. A 404 on a delete is treated as success, so the stale document stays.
 
 # Source
 ElasticSearch source connector allows you to move data from multiple Elasticsearch indexes with the specified `host` and `indexes`. It uses elasticsearch search api to pull data from indexes. Upon starting it pulls batches of data from indexes, once all the data is retrieved, it then polls the search api to pull data at regular intervals. 
