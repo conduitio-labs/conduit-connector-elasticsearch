@@ -384,3 +384,52 @@ func TestDestination_Write_ClosesBodyWhenReadFails(t *testing.T) {
 	require.Equal(t, 0, n)
 	require.True(t, closed)
 }
+
+// TestDestination_Write_404 is the regression test for #154. A 404 is only a
+// confirmed outcome for delete (the document is already gone). For every
+// other operation it means nothing was stored, e.g. the index does not exist
+// and auto-creation is disabled, so the record must not be reported written.
+func TestDestination_Write_404(t *testing.T) {
+	notFound := func(id string) *bulkResponseItem {
+		return &bulkResponseItem{
+			ID:     id,
+			Status: http.StatusNotFound,
+			Error: &bulkResponseItemError{
+				Type:     "index_not_found_exception",
+				Reason:   "no such index [x] and [action.auto_create_index] contains [-x*]",
+				CausedBy: json.RawMessage(`{}`),
+			},
+		}
+	}
+
+	tests := []struct {
+		name    string
+		item    bulkResponseItems
+		wantN   int
+		wantErr bool
+	}{
+		{name: "update 404 is a failure", item: bulkResponseItems{Update: notFound("k1")}, wantN: 1, wantErr: true},
+		{name: "create 404 is a failure", item: bulkResponseItems{Create: notFound("k1")}, wantN: 1, wantErr: true},
+		{name: "index 404 is a failure", item: bulkResponseItems{Index: notFound("k1")}, wantN: 1, wantErr: true},
+		{
+			name:  "delete 404 stays a success",
+			item:  bulkResponseItems{Delete: &bulkResponseItem{ID: "k1", Status: http.StatusNotFound}},
+			wantN: 3,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			items := []bulkResponseItems{bulkItemOK("k0"), tc.item, bulkItemOK("k2")}
+			n, err := newTestDestination(t, items).Write(context.Background(), testRecords(3))
+
+			require.Equal(t, tc.wantN, n)
+			if tc.wantErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "key=k1 ")
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
