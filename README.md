@@ -36,6 +36,16 @@ For any other action a warning entry is added to log and Record is skipped.
 | `retries`                | The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255`. Note that the higher value, the longer it may take to process retries, as a result, ingest next operations. | `true`                                               | `"1000"` |
 
 
+## Delivery semantics
+
+The destination is at-least-once. A batch is sent as one bulk request, and a record is acknowledged only after Elasticsearch confirms its item.
+
+- When an item fails, the write stops at that record: records before it are acknowledged, the failed record and every record after it are not. Items after the failed one may already be stored in Elasticsearch.
+- Records with a key are written as upserts by document ID, so sending them again overwrites the same document. Deletes are idempotent.
+- Records without a key use `create` with a generated ID, so a replay stores them twice.
+- With a dead-letter queue configured, one rejected item sends the whole tail of the batch (`batch[n:]`) to the DLQ, each record carrying the error of record `n`, including records Elasticsearch did store.
+- Each of those tail records counts against `dlq.window-nack-threshold`.
+
 # Source
 ElasticSearch source connector allows you to move data from multiple Elasticsearch indexes with the specified `host` and `indexes`. It uses elasticsearch search api to pull data from indexes. Upon starting it pulls batches of data from indexes, once all the data is retrieved, it then polls the search api to pull data at regular intervals. 
 

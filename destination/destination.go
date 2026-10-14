@@ -111,7 +111,12 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 
 	// NB: The order of responses is the same as the order of requests
 	// https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html#bulk-api-response-body
-	for n, item := range response.Items {
+	items := response.Items
+	if len(items) > len(records) {
+		// The SDK slices batch[n:], so n must never exceed len(records).
+		items = items[:len(records)]
+	}
+	for n, item := range items {
 		// Detect operation result
 		var itemResponse bulkResponseItem
 		var operationType string
@@ -141,6 +146,7 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 			)
 		}
 
+		// TODO(#154): 404 is not a confirmed write for update/create
 		if (itemResponse.Status >= 200 && itemResponse.Status < 300) || itemResponse.Status == 404 {
 			continue
 		}
@@ -169,8 +175,8 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 
 	// Invariant 1: every record needs its own confirmation. A response with
 	// fewer items than the request leaves the rest unconfirmed.
-	if len(response.Items) < len(records) {
-		return len(response.Items), fmt.Errorf(
+	if len(items) < len(records) {
+		return len(items), fmt.Errorf(
 			"bulk response contains %d items for %d records",
 			len(response.Items),
 			len(records),
@@ -311,6 +317,8 @@ func (d *Destination) executeBulkRequest(ctx context.Context, data *bytes.Buffer
 	// Get the response
 	bodyContents, err := io.ReadAll(responseBody)
 	if err != nil {
+		_ = responseBody.Close()
+
 		return bulkResponse{}, fmt.Errorf("bulk response failure: failed to read the result: %w", err)
 	}
 

@@ -347,3 +347,40 @@ func testRecords(n int) []opencdc.Record {
 
 	return recs
 }
+
+// TestDestination_Write_LongerResponseNeverExceedsBatch: the SDK slices
+// batch[n:], so n must stay below len(records) when a write fails.
+func TestDestination_Write_LongerResponseNeverExceedsBatch(t *testing.T) {
+	items := []bulkResponseItems{bulkItemOK("k0"), bulkItemOK("k1"), bulkItemOK("k2"), bulkItemOK("k3")}
+
+	t.Run("all ok", func(t *testing.T) {
+		n, err := newTestDestination(t, items).Write(context.Background(), testRecords(2))
+		require.NoError(t, err)
+		require.Equal(t, 2, n)
+	})
+
+	t.Run("failure beyond the batch is ignored", func(t *testing.T) {
+		items := append(items[:2:2], bulkItemFailed("k2"))
+		n, err := newTestDestination(t, items).Write(context.Background(), testRecords(2))
+		require.NoError(t, err)
+		require.Equal(t, 2, n)
+	})
+}
+
+type errReadCloser struct{ closed *bool }
+
+func (errReadCloser) Read([]byte) (int, error) { return 0, fmt.Errorf("read failed") }
+func (e errReadCloser) Close() error           { *e.closed = true; return nil }
+
+func TestDestination_Write_ClosesBodyWhenReadFails(t *testing.T) {
+	d := newTestDestination(t, nil)
+	var closed bool
+	d.client.(*clientMock).BulkFunc = func(context.Context, io.Reader) (io.ReadCloser, error) {
+		return errReadCloser{closed: &closed}, nil
+	}
+
+	n, err := d.Write(context.Background(), testRecords(2))
+	require.Error(t, err)
+	require.Equal(t, 0, n)
+	require.True(t, closed)
+}
