@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	"github.com/conduitio/conduit-commons/config"
@@ -146,8 +147,13 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 			)
 		}
 
-		// TODO(#154): 404 is not a confirmed write for update/create
-		if (itemResponse.Status >= 200 && itemResponse.Status < 300) || itemResponse.Status == 404 {
+		if itemResponse.Status >= 200 && itemResponse.Status < 300 {
+			continue
+		}
+		// Invariant 1: a 404 confirms only a delete (the document is already
+		// gone). For index/create/update it means nothing was stored, e.g. the
+		// index is missing and auto-creation is disabled (#154).
+		if itemResponse.Status == http.StatusNotFound && operationType == "delete" {
 			continue
 		}
 
