@@ -1,8 +1,6 @@
-version: '3.9'
-
 services:
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.17.3
+    image: docker.elastic.co/kibana/kibana:7.17.29
     depends_on:
       - elasticsearch
     links:

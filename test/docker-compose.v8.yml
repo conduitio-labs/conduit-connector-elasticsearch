@@ -1,8 +1,6 @@
-version: '3.9'
-
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.2.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
     environment:
       node.name: 'elasticsearch-v8'
       cluster.name: 'es-v7-docker-cluster'
@@ -11,7 +9,7 @@ services:
       xpack.security.enabled: 'false'
       xpack.license.self_generated.type: 'basic'
       ES_JAVA_OPTS: '-Xms512m -Xmx512m'
-    mem_limit: ${MEM_LIMIT}
+    mem_limit: ${MEM_LIMIT:-1073741824}
     ulimits:
       memlock:
         soft: -1

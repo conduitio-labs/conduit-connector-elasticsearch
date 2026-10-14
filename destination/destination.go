@@ -81,8 +81,20 @@ func (d *Destination) Open(ctx context.Context) (err error) {
 	return nil
 }
 
+// Write sends records to Elasticsearch as one bulk request.
+//
+// It returns the number of records at the start of the batch that
+// Elasticsearch confirmed, together with the error that stopped the write. The
+// SDK acks records[:n] and nacks records[n:], so records[n] is the first record
+// that was NOT confirmed.
+//
+// Delivery is at-least-once. Bulk items are independent, so items after the
+// first failure may already be indexed; they are nacked with the rest of the
+// batch and sent again. Re-sending is safe for keyed records: they are written
+// as updates with doc_as_upsert under the record key as the document ID, and
+// deletes are idempotent. Records without a key are indexed with a generated
+// ID, so a re-sent keyless record is stored twice.
 func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int, error) {
-	// Execute operations
 	// todo return retries
 
 	// Prepare request payload
@@ -99,7 +111,12 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 
 	// NB: The order of responses is the same as the order of requests
 	// https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html#bulk-api-response-body
-	for n, item := range response.Items {
+	items := response.Items
+	if len(items) > len(records) {
+		// The SDK slices batch[n:], so n must never exceed len(records).
+		items = items[:len(records)]
+	}
+	for n, item := range items {
 		// Detect operation result
 		var itemResponse bulkResponseItem
 		var operationType string
@@ -122,17 +139,23 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 			operationType = "delete"
 
 		default:
-			sdk.Logger(ctx).Warn().Msg("no index, create, update or delete details were found in Elasticsearch response")
-
-			continue
+			// Invariant 1: an item we cannot read is not a confirmed write.
+			return n, fmt.Errorf(
+				"item %d: no index, create, update or delete details were found in Elasticsearch response",
+				n,
+			)
 		}
 
+		// TODO(#154): 404 is not a confirmed write for update/create
 		if (itemResponse.Status >= 200 && itemResponse.Status < 300) || itemResponse.Status == 404 {
 			continue
 		}
 
+		// Invariant 1: ack only after Elasticsearch confirms the write. Item n
+		// failed, so exactly records[:n] are confirmed. Returning n+1 would make
+		// the SDK ack the failed record and lose it (#153).
 		if itemResponse.Error == nil {
-			return n + 1, fmt.Errorf(
+			return n, fmt.Errorf(
 				"item with key=%s %s failure: unknown error status: %d",
 				itemResponse.ID,
 				operationType,
@@ -140,13 +163,23 @@ func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int,
 			)
 		}
 
-		return n + 1, fmt.Errorf(
+		return n, fmt.Errorf(
 			"item with key=%s %s failure: [%s] %s: %s",
 			itemResponse.ID,
 			operationType,
 			itemResponse.Error.Type,
 			itemResponse.Error.Reason,
 			itemResponse.Error.CausedBy,
+		)
+	}
+
+	// Invariant 1: every record needs its own confirmation. A response with
+	// fewer items than the request leaves the rest unconfirmed.
+	if len(items) < len(records) {
+		return len(items), fmt.Errorf(
+			"bulk response contains %d items for %d records",
+			len(response.Items),
+			len(records),
 		)
 	}
 
@@ -284,6 +317,8 @@ func (d *Destination) executeBulkRequest(ctx context.Context, data *bytes.Buffer
 	// Get the response
 	bodyContents, err := io.ReadAll(responseBody)
 	if err != nil {
+		_ = responseBody.Close()
+
 		return bulkResponse{}, fmt.Errorf("bulk response failure: failed to read the result: %w", err)
 	}
 
