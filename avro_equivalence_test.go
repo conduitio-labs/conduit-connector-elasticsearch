@@ -17,8 +17,9 @@ package elasticsearch_test
 // Avro codec equivalence across the hamba/avro -> iskorotkov/avro move
 // (ConduitIO/conduit#3012).
 //
-// This connector never imports an Avro library. The codec is reached through
-// the SDK middleware, which uses conduit-commons:
+// The codec is reached through the SDK middleware, which uses conduit-commons.
+// (The destination imports the codec only to read decimal scales from a parsed
+// schema, #171; it never encodes or decodes with it.)
 //
 //   - destination: sdk.schema.extract.{key,payload}.enabled (default true)
 //     decodes Avro-encoded keys and payloads into opencdc.StructuredData before
@@ -401,6 +402,28 @@ func applyAccepted(t *testing.T, w *destinationFixture) {
 	}
 }
 
+// decimalChange lists the cases changed by the fix for #171, which is not part
+// of the codec move: an Avro decimal decodes to a *big.Rat on both codecs, and
+// the destination used to write its ratio ("-15432/125"). It now writes exact
+// decimal text at the schema's scale. The decoded value is unchanged. Each
+// entry pins the old and the new document, so the change cannot spread to
+// other shapes without failing the test.
+var decimalChange = map[string]struct{ docFrom, docTo string }{
+	"decimal-bytes":    {`{"doc":{"f":"-15432/125"}`, `{"doc":{"f":"-123.456"}`},
+	"decimal-fixed":    {`{"doc":{"f":"19753/20"}`, `{"doc":{"f":"987.65"}`},
+	"nullable-decimal": {`{"doc":{"f":"5/4"}`, `{"doc":{"f":"1.25"}`},
+	"every-type":       {`"dec":"6283/20"`, `"dec":"314.15"`},
+	"decimal-highprec": {
+		`{"doc":{"f":"123456789012345678900123456789/10000000000"}`,
+		`{"doc":{"f":"12345678901234567890.0123456789"}`,
+	},
+	// The codec rounds 1/3 to the scale when encoding; the text shows exactly
+	// what was encoded.
+	"decimal-rounding":  {`{"doc":{"f":"33/100"}`, `{"doc":{"f":"0.33"}`},
+	"decimal-fixed-neg": {`{"doc":{"f":"-1/100"}`, `{"doc":{"f":"-0.01"}`},
+	"decimal-zero-raw":  {`{"doc":{"f":"0"}`, `{"doc":{"f":"0.00"}`},
+}
+
 // sourceDocIDs are the Elasticsearch document IDs the source turns into keys.
 var sourceDocIDs = []string{"doc-1", "", "ünïcødé", strings.Repeat("x", 512), "with\"quote\\and\nnewline"}
 
@@ -559,6 +582,12 @@ func compareDestination(t *testing.T, cases []destinationCase, wantDst map[strin
 		if applyChanges {
 			applyAccepted(t, &w)
 		}
+		if c, ok := decimalChange[g.Name]; ok {
+			if !strings.Contains(w.Bulk, c.docFrom) {
+				t.Errorf("%s: frozen bulk body does not contain %s:\n%s", g.Name, c.docFrom, w.Bulk)
+			}
+			w.Bulk = strings.Replace(w.Bulk, c.docFrom, c.docTo, 1)
+		}
 		compareField(t, g.Name, "decoded value", w.Decoded, g.Decoded)
 		compareField(t, g.Name, "decode error", w.DecodeError, g.DecodeError)
 		compareField(t, g.Name, "bulk body", w.Bulk, g.Bulk)
@@ -576,6 +605,11 @@ func compareDestination(t *testing.T, cases []destinationCase, wantDst map[strin
 	for name := range acceptedChanges {
 		if !caseNames[name] {
 			t.Errorf("%s: listed in acceptedChanges but not a case", name)
+		}
+	}
+	for name := range decimalChange {
+		if !caseNames[name] {
+			t.Errorf("%s: listed in decimalChange but not a case", name)
 		}
 	}
 }

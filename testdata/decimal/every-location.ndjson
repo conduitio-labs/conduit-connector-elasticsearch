@@ -1,0 +1,2 @@
+{"update":{"_id":"k1","_index":"idx","retry_on_conflict":3}}
+{"doc":{"arr":[null,"0.50","-3.00"],"fixed":"2.5000","m":{"a":"100.00","b":"-0.01"},"missing":null,"nested":{"price":"9.9900","tags":["1.0000","0.0001"]},"nullable":"1.50","s":"1.5 as a plain string","top":"-123.456"},"doc_as_upsert":true}

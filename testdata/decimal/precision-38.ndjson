@@ -1,0 +1,2 @@
+{"update":{"_id":"k1","_index":"idx","retry_on_conflict":3}}
+{"doc":{"f":"-99999999999999999999999999.999999999999"},"doc_as_upsert":true}
