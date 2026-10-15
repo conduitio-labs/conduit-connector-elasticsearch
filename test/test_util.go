@@ -54,14 +54,20 @@ func ConfigureDestination(ctx context.Context, dest sdk.Destination, cfg map[str
 
 func GetClient(cfgMap map[string]string) (elasticsearch.Client, error) {
 	ctx := context.Background()
-	cfg := esDestination.Config{}
+	// Parse into the config of a real destination: the SDK fills in the
+	// middleware defaults (such as the record serializers) when it wraps the
+	// destination, and Config.Validate checks them.
+	cfg, ok := esDestination.NewDestination().Config().(*esDestination.Config)
+	if !ok {
+		return nil, fmt.Errorf("unexpected destination config type")
+	}
 
-	err := sdk.Util.ParseConfig(ctx, cfgMap, &cfg, es.Connector.NewSpecification().DestinationParams)
+	err := sdk.Util.ParseConfig(ctx, cfgMap, cfg, es.Connector.NewSpecification().DestinationParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed parsing config: %w", err)
 	}
 
-	client, err := elasticsearch.NewClient(cfg.Version, cfg)
+	client, err := elasticsearch.NewClient(cfg.Version, *cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating client: %w", err)
 	}
