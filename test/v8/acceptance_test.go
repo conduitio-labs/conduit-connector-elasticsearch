@@ -62,10 +62,10 @@ func (d *CustomConfigurableAcceptanceTestDriver) ReadFromDestination(_ *testing.
 
 func TestAcceptance(t *testing.T) {
 	destinationConfig := map[string]string{
-		esDestination.ConfigVersion:  elasticsearch.Version8,
-		esDestination.ConfigHost:     "http://127.0.0.1:9200",
-		esDestination.ConfigIndex:    "acceptance_idx",
-		esDestination.ConfigBulkSize: "100",
+		test.ParamVersion:  elasticsearch.Version8,
+		test.ParamHost:     test.Host(),
+		test.ParamIndex:    "acceptance_idx",
+		test.ParamBulkSize: "100",
 	}
 
 	client, err := test.GetClient(destinationConfig)
@@ -77,7 +77,7 @@ func TestAcceptance(t *testing.T) {
 		ConfigurableAcceptanceTestDriver: sdk.ConfigurableAcceptanceTestDriver{
 			Config: sdk.ConfigurableAcceptanceTestDriverConfig{
 				Connector: sdk.Connector{
-					NewSpecification: es.Specification,
+					NewSpecification: es.Connector.NewSpecification,
 
 					NewSource: nil,
 
@@ -89,7 +89,7 @@ func TestAcceptance(t *testing.T) {
 				AfterTest: func(_ *testing.T) {
 					assertIndexIsDeleted(
 						client.(*v8.Client).GetClient(),
-						destinationConfig[esDestination.ConfigIndex],
+						destinationConfig["index"],
 					)
 				},
 

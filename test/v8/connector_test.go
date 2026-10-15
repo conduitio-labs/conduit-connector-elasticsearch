@@ -39,14 +39,14 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
-		destination.ConfigVersion:  elasticsearch.Version8,
-		destination.ConfigHost:     "http://127.0.0.1:9200",
-		destination.ConfigIndex:    "users",
-		destination.ConfigType:     "user",
-		destination.ConfigBulkSize: "1",
+		test.ParamVersion:  elasticsearch.Version8,
+		test.ParamHost:     test.Host(),
+		test.ParamIndex:    "users",
+		test.ParamType:     "user",
+		test.ParamBulkSize: "1",
 	}
 
-	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
+	require.NoError(t, test.ConfigureDestination(context.Background(), dest, cfgRaw))
 	require.NoError(t, dest.Open(context.Background()))
 
 	client, err := test.GetClient(cfgRaw)
@@ -271,14 +271,14 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
-		destination.ConfigVersion:  elasticsearch.Version8,
-		destination.ConfigHost:     "http://127.0.0.1:9200",
-		destination.ConfigIndex:    "users",
-		destination.ConfigType:     "user",
-		destination.ConfigBulkSize: "3",
+		test.ParamVersion:  elasticsearch.Version8,
+		test.ParamHost:     test.Host(),
+		test.ParamIndex:    "users",
+		test.ParamType:     "user",
+		test.ParamBulkSize: "3",
 	}
 
-	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
+	require.NoError(t, test.ConfigureDestination(context.Background(), dest, cfgRaw))
 	require.NoError(t, dest.Open(context.Background()))
 
 	client, err := test.GetClient(cfgRaw)
