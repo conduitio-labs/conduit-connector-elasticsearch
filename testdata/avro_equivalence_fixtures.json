@@ -1,0 +1,479 @@
+{
+  "codec": "github.com/hamba/avro/v2",
+  "destination": [
+    {
+      "name": "boolean",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"boolean\"}]}",
+      "payloadAvro": "AQ==",
+      "keyAvro": "FmtleS1ib29sZWFu",
+      "decoded": "map{\"f\": true}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-boolean\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":true},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "int",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"int\"}]}",
+      "payloadAvro": "/////w8=",
+      "keyAvro": "DmtleS1pbnQ=",
+      "decoded": "map{\"f\": -2147483648}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-int\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":-2147483648},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "int-from-int",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"int\"}]}",
+      "payloadAvro": "VA==",
+      "keyAvro": "IGtleS1pbnQtZnJvbS1pbnQ=",
+      "decoded": "map{\"f\": 42}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-int-from-int\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":42},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "long",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"long\"}]}",
+      "payloadAvro": "goCAgICAgCA=",
+      "keyAvro": "EGtleS1sb25n",
+      "decoded": "map{\"f\": 9007199254740993}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-long\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":9007199254740993},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "long-from-int",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"long\"}]}",
+      "payloadAvro": "Dg==",
+      "keyAvro": "ImtleS1sb25nLWZyb20taW50",
+      "decoded": "map{\"f\": 7}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-long-from-int\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":7},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "float",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"float\"}]}",
+      "payloadAvro": "0A9JQA==",
+      "keyAvro": "EmtleS1mbG9hdA==",
+      "decoded": "map{\"f\": 3.14159}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-float\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":3.14159},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "double",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"double\"}]}",
+      "payloadAvro": "WfP4wh9upQE=",
+      "keyAvro": "FGtleS1kb3VibGU=",
+      "decoded": "map{\"f\": 1e-300}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-double\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":1e-300},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "double-negative-zero",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"double\"}]}",
+      "payloadAvro": "AAAAAAAAAIA=",
+      "keyAvro": "MGtleS1kb3VibGUtbmVnYXRpdmUtemVybw==",
+      "decoded": "map{\"f\": -0}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-double-negative-zero\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":-0},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "string",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "NmjDqWxsbyAid8O2cmxkIiA8dGFnPiAmIOKAqA==",
+      "keyAvro": "FGtleS1zdHJpbmc=",
+      "decoded": "map{\"f\": \"héllo \\\"wörld\\\" \u003ctag\u003e \u0026 \\u2028\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-string\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"héllo \\\"wörld\\\" \\u003ctag\\u003e \\u0026 \\u2028\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "string-empty",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "IGtleS1zdHJpbmctZW1wdHk=",
+      "decoded": "map{\"f\": \"\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-string-empty\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "bytes",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"bytes\"}]}",
+      "payloadAvro": "CAABAv8=",
+      "keyAvro": "EmtleS1ieXRlcw==",
+      "decoded": "map{\"f\": []byte{0x0, 0x1, 0x2, 0xff}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-bytes\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"AAEC/w==\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "bytes-empty",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"bytes\"}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "HmtleS1ieXRlcy1lbXB0eQ==",
+      "decoded": "map{\"f\": []byte{}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-bytes-empty\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "null",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"null\"}]}",
+      "payloadAvro": "",
+      "keyAvro": "EGtleS1udWxs",
+      "decoded": "map{\"f\": \u003cnil\u003e}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-null\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "nullable-string-null",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",\"string\"]}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "MGtleS1udWxsYWJsZS1zdHJpbmctbnVsbA==",
+      "decoded": "map{\"f\": \u003cnil\u003e}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-nullable-string-null\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "nullable-string-value",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",\"string\"]}]}",
+      "payloadAvro": "AgJ4",
+      "keyAvro": "MmtleS1udWxsYWJsZS1zdHJpbmctdmFsdWU=",
+      "decoded": "map{\"f\": \"x\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-nullable-string-value\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"x\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "nullable-long-value",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",\"long\"]}]}",
+      "payloadAvro": "Ago=",
+      "keyAvro": "LmtleS1udWxsYWJsZS1sb25nLXZhbHVl",
+      "decoded": "map{\"f\": 5}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-nullable-long-value\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":5},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "nullable-double-value",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",\"double\"]}]}",
+      "payloadAvro": "AgAAAAAAAARA",
+      "keyAvro": "MmtleS1udWxsYWJsZS1kb3VibGUtdmFsdWU=",
+      "decoded": "map{\"f\": 2.5}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-nullable-double-value\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":2.5},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "nullable-record",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}]}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.nullable-record.payload:1 (id: 35): could not marshal into avro: f: avro: unknown union type a",
+      "keyAvro": "JmtleS1udWxsYWJsZS1yZWNvcmQ=",
+      "written": 0
+    },
+    {
+      "name": "enum",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"enum\",\"name\":\"color\",\"symbols\":[\"RED\",\"GREEN\"]}}]}",
+      "payloadAvro": "Ag==",
+      "keyAvro": "EGtleS1lbnVt",
+      "decoded": "map{\"f\": \"GREEN\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-enum\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"GREEN\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "fixed",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"fixed\",\"name\":\"four\",\"size\":4}}]}",
+      "payloadAvro": "AQIDBA==",
+      "keyAvro": "EmtleS1maXhlZA==",
+      "decoded": "map{\"f\": [4]uint8{0x1, 0x2, 0x3, 0x4}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-fixed\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[1,2,3,4]},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-int",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":\"int\"}}]}",
+      "payloadAvro": "BQYCBAYA",
+      "keyAvro": "GmtleS1hcnJheS1pbnQ=",
+      "decoded": "map{\"f\": []any{1, 2, 3}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-int\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[1,2,3]},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-empty",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":\"string\"}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "HmtleS1hcnJheS1lbXB0eQ==",
+      "decoded": "map{\"f\": []any(nil)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-empty\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-empty-in-record",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":{\"type\":\"array\",\"items\":\"int\"}}]}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "MmtleS1hcnJheS1lbXB0eS1pbi1yZWNvcmQ=",
+      "decoded": "map{\"f\": map{\"a\": []any(nil)}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-empty-in-record\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"a\":null}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-empty-in-union",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",{\"type\":\"array\",\"items\":\"int\"}]}]}",
+      "payloadAvro": "AgA=",
+      "keyAvro": "MGtleS1hcnJheS1lbXB0eS1pbi11bmlvbg==",
+      "decoded": "map{\"f\": []any(nil)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-empty-in-union\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-of-empty-arrays",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":{\"type\":\"array\",\"items\":{\"type\":\"array\",\"items\":\"int\"}}}}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to parse schema of type avro: could not parse avro schema: avro: unknown type: map[type:map[items:map[items:int type:array] type:array]]",
+      "keyAvro": "MmtleS1hcnJheS1vZi1lbXB0eS1hcnJheXM=",
+      "written": 0
+    },
+    {
+      "name": "map-of-empty-array",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":{\"type\":\"array\",\"items\":\"int\"}}}]}",
+      "payloadAvro": "AQYCawAA",
+      "keyAvro": "LGtleS1tYXAtb2YtZW1wdHktYXJyYXk=",
+      "decoded": "map{\"f\": map{\"k\": []any(nil)}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-of-empty-array\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"k\":null}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-nullable",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":[\"null\",\"string\"]}}]}",
+      "payloadAvro": "AwgCAmEAAA==",
+      "keyAvro": "JGtleS1hcnJheS1udWxsYWJsZQ==",
+      "decoded": "map{\"f\": []any{\"a\", \u003cnil\u003e}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-nullable\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[\"a\",null]},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "map-long",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":\"long\"}}]}",
+      "payloadAvro": "AwwCYgQCYQIA",
+      "keyAvro": "GGtleS1tYXAtbG9uZw==",
+      "decoded": "map{\"f\": map{\"a\": 1, \"b\": 2}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-long\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"a\":1,\"b\":2}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "map-single",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}",
+      "payloadAvro": "AQgCawJ2AA==",
+      "keyAvro": "HGtleS1tYXAtc2luZ2xl",
+      "decoded": "map{\"f\": map{\"k\": \"v\"}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-single\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"k\":\"v\"}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "map-empty",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "GmtleS1tYXAtZW1wdHk=",
+      "decoded": "map{\"f\": map{}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-empty\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "record-nested",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":\"string\"},{\"name\":\"b\",\"type\":{\"type\":\"array\",\"items\":\"double\"}}]}}]}",
+      "payloadAvro": "AngDIAAAAAAAAPg/AAAAAAAABEAA",
+      "keyAvro": "ImtleS1yZWNvcmQtbmVzdGVk",
+      "decoded": "map{\"f\": map{\"a\": \"x\", \"b\": []any{1.5, 2.5}}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-record-nested\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"a\":\"x\",\"b\":[1.5,2.5]}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "date",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"int\",\"logicalType\":\"date\"}}]}",
+      "payloadAvro": "jLUC",
+      "keyAvro": "EGtleS1kYXRl",
+      "decoded": "map{\"f\": time.Date(2024, time.February, 29, 0, 0, 0, 0, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-date\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2024-02-29T00:00:00Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "time-millis",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"int\",\"logicalType\":\"time-millis\"}}]}",
+      "payloadAvro": "0KG5LQ==",
+      "keyAvro": "HmtleS10aW1lLW1pbGxpcw==",
+      "decoded": "map{\"f\": 47655016000000}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-time-millis\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":47655016000000},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "time-micros",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"time-micros\"}}]}",
+      "payloadAvro": "otD619wC",
+      "keyAvro": "HmtleS10aW1lLW1pY3Jvcw==",
+      "decoded": "map{\"f\": 46800000017000}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-time-micros\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":46800000017000},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "timestamp-millis",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-millis\"}}]}",
+      "payloadAvro": "xuDZy+lj",
+      "keyAvro": "KGtleS10aW1lc3RhbXAtbWlsbGlz",
+      "decoded": "map{\"f\": time.Date(2024, time.May, 6, 7, 8, 9, 123000000, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-timestamp-millis\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2024-05-06T07:08:09.123Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "timestamp-micros",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+      "payloadAvro": "gKqatffwiwY=",
+      "keyAvro": "KGtleS10aW1lc3RhbXAtbWljcm9z",
+      "decoded": "map{\"f\": time.Date(2024, time.May, 6, 7, 8, 9, 123456000, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-timestamp-micros\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2024-05-06T07:08:09.123456Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "timestamp-pre-epoch",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+      "payloadAvro": "AQ==",
+      "keyAvro": "LmtleS10aW1lc3RhbXAtcHJlLWVwb2No",
+      "decoded": "map{\"f\": time.Date(1969, time.December, 31, 23, 59, 59, 999999000, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-timestamp-pre-epoch\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"1969-12-31T23:59:59.999999Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "local-timestamp-millis",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"local-timestamp-millis\"}}]}",
+      "payloadAvro": "xsrVs+lj",
+      "keyAvro": "NGtleS1sb2NhbC10aW1lc3RhbXAtbWlsbGlz",
+      "decoded": "map{\"f\": time.Date(2024, time.May, 6, 0, 8, 9, 123000000, time.Local)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-local-timestamp-millis\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2024-05-06T00:08:09.123-07:00\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "local-timestamp-micros",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"local-timestamp-micros\"}}]}",
+      "payloadAvro": "gLrO1LvviwY=",
+      "keyAvro": "NGtleS1sb2NhbC10aW1lc3RhbXAtbWljcm9z",
+      "decoded": "map{\"f\": time.Date(2024, time.May, 6, 0, 8, 9, 123456000, time.Local)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-local-timestamp-micros\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2024-05-06T00:08:09.123456-07:00\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "decimal-bytes",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":10,\"scale\":3}}]}",
+      "payloadAvro": "Bv4dwA==",
+      "keyAvro": "ImtleS1kZWNpbWFsLWJ5dGVz",
+      "decoded": "map{\"f\": *big.Rat(-15432/125)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-decimal-bytes\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"-15432/125\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "decimal-fixed",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"fixed\",\"name\":\"dec\",\"size\":8,\"logicalType\":\"decimal\",\"precision\":12,\"scale\":2}}]}",
+      "payloadAvro": "AAAAAAABgc0=",
+      "keyAvro": "ImtleS1kZWNpbWFsLWZpeGVk",
+      "decoded": "map{\"f\": *big.Rat(19753/20)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-decimal-fixed\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"19753/20\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "nullable-decimal",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":10,\"scale\":2}]}]}",
+      "payloadAvro": "AgJ9",
+      "keyAvro": "KGtleS1udWxsYWJsZS1kZWNpbWFs",
+      "decoded": "map{\"f\": *big.Rat(5/4)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-nullable-decimal\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"5/4\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "uuid",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"string\",\"logicalType\":\"uuid\"}}]}",
+      "payloadAvro": "SGMwZmZlZTAwLTEyMzQtNTY3OC05YWJjLWRlZjAxMjM0NTY3OA==",
+      "keyAvro": "EGtleS11dWlk",
+      "decoded": "map{\"f\": \"c0ffee00-1234-5678-9abc-def012345678\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-uuid\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"c0ffee00-1234-5678-9abc-def012345678\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "field-default",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"},{\"name\":\"g\",\"type\":\"int\",\"default\":7}]}",
+      "payloadAvro": "AngQ",
+      "keyAvro": "ImtleS1maWVsZC1kZWZhdWx0",
+      "decoded": "map{\"f\": \"x\", \"g\": 8}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-field-default\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"x\",\"g\":8},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "field-order",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"z\",\"type\":\"int\"},{\"name\":\"a\",\"type\":\"int\"},{\"name\":\"m\",\"type\":\"string\"}]}",
+      "payloadAvro": "NAICbQ==",
+      "keyAvro": "HmtleS1maWVsZC1vcmRlcg==",
+      "decoded": "map{\"a\": 1, \"m\": \"m\", \"z\": 26}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-field-order\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"a\":1,\"m\":\"m\",\"z\":26},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "extra-map-key-ignored",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "Ang=",
+      "keyAvro": "MmtleS1leHRyYS1tYXAta2V5LWlnbm9yZWQ=",
+      "decoded": "map{\"f\": \"x\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-extra-map-key-ignored\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"x\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "missing-field",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"},{\"name\":\"g\",\"type\":\"string\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.missing-field.payload:1 (id: 93): could not marshal into avro: avro: missing required field g",
+      "keyAvro": "ImtleS1taXNzaW5nLWZpZWxk",
+      "written": 0
+    },
+    {
+      "name": "type-mismatch",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"int\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.type-mismatch.payload:1 (id: 95): could not marshal into avro: f: avro: string is unsupported for Avro int",
+      "keyAvro": "ImtleS10eXBlLW1pc21hdGNo",
+      "written": 0
+    },
+    {
+      "name": "every-type",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"b\",\"type\":\"boolean\"},{\"name\":\"i\",\"type\":\"int\"},{\"name\":\"l\",\"type\":\"long\"},{\"name\":\"fl\",\"type\":\"float\"},{\"name\":\"d\",\"type\":\"double\"},{\"name\":\"s\",\"type\":\"string\"},{\"name\":\"by\",\"type\":\"bytes\"},{\"name\":\"n\",\"type\":[\"null\",\"string\"]},{\"name\":\"e\",\"type\":{\"type\":\"enum\",\"name\":\"e\",\"symbols\":[\"A\",\"B\"]}},{\"name\":\"fx\",\"type\":{\"type\":\"fixed\",\"name\":\"fx\",\"size\":2}},{\"name\":\"a\",\"type\":{\"type\":\"array\",\"items\":\"long\"}},{\"name\":\"m\",\"type\":{\"type\":\"map\",\"values\":\"boolean\"}},{\"name\":\"r\",\"type\":{\"type\":\"record\",\"name\":\"r\",\"fields\":[{\"name\":\"x\",\"type\":\"int\"}]}},{\"name\":\"dt\",\"type\":{\"type\":\"int\",\"logicalType\":\"date\"}},{\"name\":\"tsm\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-millis\"}},{\"name\":\"dec\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":6,\"scale\":2}},{\"name\":\"u\",\"type\":{\"type\":\"string\",\"logicalType\":\"uuid\"}}]}",
+      "payloadAvro": "AAIEAAAAPwAAAAAAANA/AnMEYnkCAm4CCQgDBAIEAAEGAnQBAAaaqwGCsP2sjTcEerdIMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw",
+      "keyAvro": "HGtleS1ldmVyeS10eXBl",
+      "decoded": "map{\"a\": []any{1, 2}, \"b\": false, \"by\": []byte{0x62, 0x79}, \"d\": 0.25, \"dec\": *big.Rat(6283/20), \"dt\": time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), \"e\": \"B\", \"fl\": 0.5, \"fx\": [2]uint8{0x9, 0x8}, \"i\": 1, \"l\": 2, \"m\": map{\"t\": true}, \"n\": \"n\", \"r\": map{\"x\": 3}, \"s\": \"s\", \"tsm\": time.Date(2000, time.January, 1, 0, 0, 0, 1000000, time.UTC), \"u\": \"00000000-0000-0000-0000-000000000000\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-every-type\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"a\":[1,2],\"b\":false,\"by\":\"Ynk=\",\"d\":0.25,\"dec\":\"6283/20\",\"dt\":\"2000-01-01T00:00:00Z\",\"e\":\"B\",\"fl\":0.5,\"fx\":[9,8],\"i\":1,\"l\":2,\"m\":{\"t\":true},\"n\":\"n\",\"r\":{\"x\":3},\"s\":\"s\",\"tsm\":\"2000-01-01T00:00:00.001Z\",\"u\":\"00000000-0000-0000-0000-000000000000\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    }
+  ],
+  "source": [
+    {
+      "name": "source-0",
+      "docID": "doc-1",
+      "keyType": "opencdc.StructuredData",
+      "keyBytes": "eyJpZCI6ImRvYy0xIn0=",
+      "payload": "{\"n\":1,\"title\":\"t\"}"
+    },
+    {
+      "name": "source-1",
+      "docID": "",
+      "keyType": "opencdc.StructuredData",
+      "keyBytes": "eyJpZCI6IiJ9",
+      "payload": "{\"n\":1,\"title\":\"t\"}"
+    },
+    {
+      "name": "source-2",
+      "docID": "ünïcødé",
+      "keyType": "opencdc.StructuredData",
+      "keyBytes": "eyJpZCI6IsO8bsOvY8O4ZMOpIn0=",
+      "payload": "{\"n\":1,\"title\":\"t\"}"
+    },
+    {
+      "name": "source-3",
+      "docID": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "keyType": "opencdc.StructuredData",
+      "keyBytes": "eyJpZCI6Inh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4In0=",
+      "payload": "{\"n\":1,\"title\":\"t\"}"
+    },
+    {
+      "name": "source-4",
+      "docID": "with\"quote\\and\nnewline",
+      "keyType": "opencdc.StructuredData",
+      "keyBytes": "eyJpZCI6IndpdGhcInF1b3RlXFxhbmRcbm5ld2xpbmUifQ==",
+      "payload": "{\"n\":1,\"title\":\"t\"}"
+    }
+  ]
+}
