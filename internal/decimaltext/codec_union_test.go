@@ -91,6 +91,37 @@ func TestRender_CodecUnions(t *testing.T) {
 			name: "array or decimal, array branch", typ: `["null",{"type":"array","items":` + d6 + `},` + d2 + `]`,
 			value: map[string]any{"array": []any{r()}}, want: `{"array":["1.500000"]}`,
 		},
+		// The delta review's probes: inside containers commons has already
+		// unwrapped, a user key that equals a branch name is data, not a
+		// wrapper.
+		{
+			name: "review: array of union, map item with key amount", typ: `{"type":"array","items":["null",{"type":"fixed","name":"amount","size":8,"logicalType":"decimal","precision":10,"scale":2},{"type":"map","values":` + d6 + `}]}`,
+			value: []any{map[string]any{"map": map[string]any{"amount": r()}}, map[string]any{"amount": r()}}, want: `[{"amount":"1.500000"},"1.50"]`,
+		},
+		{
+			name: "review: map of union, map value with key bytes.decimal", typ: `{"type":"map","values":["null",{"type":"map","values":` + d6 + `},` + d2 + `]}`,
+			value: map[string]any{"k": map[string]any{"map": map[string]any{"bytes.decimal": r()}}, "j": map[string]any{"bytes.decimal": r()}}, want: `{"j":"1.50","k":{"bytes.decimal":"1.500000"}}`,
+		},
+		{
+			name: "review: nullable map with key map", typ: `["null",{"type":"map","values":` + d2 + `}]`,
+			value: map[string]any{"map": map[string]any{"map": r()}}, want: `{"map":"1.50"}`,
+		},
+		{
+			name: "nullable record in a nullable record", typ: `["null",{"type":"record","name":"o","fields":[{"name":"g","type":["null",{"type":"record","name":"in","fields":[{"name":"x","type":` + d2 + `}]}]}]}]`,
+			value: map[string]any{"o": map[string]any{"g": map[string]any{"in": map[string]any{"x": r()}}}}, want: `{"g":{"in":{"x":"1.50"}}}`,
+		},
+		{
+			name: "nullable record field inside an array-of-union item", typ: `{"type":"array","items":["null",{"type":"array","items":"int"},{"type":"record","name":"it","fields":[{"name":"g","type":["null",{"type":"record","name":"in2","fields":[{"name":"x","type":` + d2 + `}]}]}]}]}`,
+			value: []any{map[string]any{"it": map[string]any{"g": map[string]any{"in2": map[string]any{"x": r()}}}}}, want: `[{"g":{"x":"1.50"}}]`,
+		},
+		{
+			name: "nullable map as map values", typ: `{"type":"map","values":["null",{"type":"map","values":` + d2 + `}]}`,
+			value: map[string]any{"k": map[string]any{"map": map[string]any{"map": r()}}}, want: `{"k":{"map":"1.50"}}`,
+		},
+		{
+			name: "nullable record inside a multi-branch record union", typ: `["null",{"type":"record","name":"ra","fields":[{"name":"g","type":["null",{"type":"record","name":"in3","fields":[{"name":"x","type":` + d2 + `}]}]}]},{"type":"record","name":"rb","fields":[{"name":"y","type":"int"}]}]`,
+			value: map[string]any{"ra": map[string]any{"g": map[string]any{"in3": map[string]any{"x": r()}}}}, want: `{"ra":{"g":{"in3":{"x":"1.50"}}}}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

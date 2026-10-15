@@ -27,20 +27,19 @@
 //   - When the Avro schema gives the decimal's scale, the text has exactly
 //     that many fractional digits ("1.50" at scale 2, "100" at scale 0), the
 //     same text for every value of a field. Without a usable scale (no schema,
-//     or a union with two decimal branches of different scales) the text has
-//     the fewest digits that are exact ("1.5").
+//     or a plain union value with two decimal branches of different scales)
+//     the text has the fewest digits that are exact ("1.5").
 //   - Render never mutates its input. It returns new maps and slices for every
 //     container on the way to a decimal.
 //
 // Render walks the shapes the conduit-commons Avro decoder produces: records
 // and maps as map[string]any (opencdc.StructuredData at the top), arrays as
-// []any. A union value comes in one of two shapes: unwrapped to the branch
-// value (commons unwraps ["null", X] record fields, and the codec unwraps
-// primitive branches), or wrapped as {"<branch full name>": value}, which the
-// codec keeps for named and complex branches of other unions, for example
-// {"bytes.decimal": 1.5} in ["null", map, decimal] or {"ns.rec": {...}}.
-// A wrapper selects its branch by name and keeps its shape; Render does not
-// unwrap it (see #173).
+// []any. Whether a union value is plain or still wrapped as
+// {"<branch full name>": value} follows from the schema and the value's
+// position alone; unionshape.go mirrors the codec's and commons' rules. A
+// wrapper selects its branch by name and keeps its shape; Render does not
+// unwrap it (see #173). A plain value is never read as a wrapper, whatever
+// its keys.
 package decimaltext
 
 import (
@@ -141,30 +140,31 @@ func Contains(v any) bool {
 // The only error is a *big.Rat without an exact decimal text, which an Avro
 // decoder never produces.
 func Render(v any, sch avro.Schema) (any, error) {
-	return render(v, sch, "")
+	return render(v, sch, root, "")
 }
 
-func render(v any, sch avro.Schema, path string) (any, error) {
+func render(v any, sch avro.Schema, at position, path string) (any, error) {
 	sch = deref(sch)
 	if u, ok := sch.(*avro.UnionSchema); ok {
-		return renderUnion(v, u, path)
+		return renderUnion(v, u, at, path)
 	}
 	switch v := v.(type) {
 	case *big.Rat:
 		return renderRat(v, sch, path)
 	case opencdc.StructuredData:
-		out, err := renderMap(v, sch, path)
+		out, err := renderMap(v, sch, at, path)
 		return opencdc.StructuredData(out), err
 	case map[string]any:
-		return renderMap(v, sch, path)
+		return renderMap(v, sch, at, path)
 	case []any:
 		if !Contains(v) {
 			return v, nil
 		}
 		items := arrayItems(sch)
+		child := at.child(arrayItem)
 		out := make([]any, len(v))
 		for i, item := range v {
-			r, err := render(item, items, fmt.Sprintf("%s[%d]", path, i))
+			r, err := render(item, items, child, fmt.Sprintf("%s[%d]", path, i))
 			if err != nil {
 				return nil, err
 			}
@@ -176,73 +176,44 @@ func render(v any, sch avro.Schema, path string) (any, error) {
 	}
 }
 
-// renderUnion renders v, decoded with the union u, in either shape (see the
-// package doc). A one-key map whose key is the full name of a branch is read
-// as a wrapper and rendered with that branch. An unwrapped value is rendered
-// with the only branch of its shape, or without a schema when there are two
-// (two record branches), so its decimals get the fewest exact digits.
-//
-// The wrapper reading wins over an unwrapped map or single-field record whose
-// only key happens to equal a branch name ("map", "null", a record's full
-// name). That costs at most the padding (fewest exact digits), except for a
-// map whose key is literally a decimal branch name such as "bytes.decimal",
-// which would get that branch's scale.
-func renderUnion(v any, u *avro.UnionSchema, path string) (any, error) {
+// renderUnion renders v, decoded with the union u at position at. When the
+// value is still wrapped (see wrapped), its one key names the branch. A plain
+// value is rendered with the only branch of its shape, or without a schema
+// when there are two (two record branches), so its decimals get the fewest
+// exact digits.
+func renderUnion(v any, u *avro.UnionSchema, at position, path string) (any, error) {
 	if !Contains(v) {
 		return v, nil
 	}
-	if w, ok := v.(map[string]any); ok && len(w) == 1 {
-		for name, inner := range w {
-			branch := branchNamed(u, name)
-			if branch == nil {
-				break
+	if wrapped(u, at) {
+		if w, ok := v.(map[string]any); ok && len(w) == 1 {
+			for name, inner := range w {
+				r, err := render(inner, branchNamed(u, name), at.throughUnion(u), path)
+				if err != nil {
+					return nil, err
+				}
+				return map[string]any{name: r}, nil
 			}
-			r, err := render(inner, branch, path)
-			if err != nil {
-				return nil, err
-			}
-			return map[string]any{name: r}, nil
 		}
+		// Not the shape the rules predict: render without a schema.
+		return render(v, nil, at.throughUnion(u), path)
 	}
+	inner := at.throughUnion(u)
 	switch v := v.(type) {
 	case *big.Rat:
 		return renderRat(v, u, path)
 	case map[string]any:
-		return renderMap(v, onlyBranch(u, avro.Record, avro.Map), path)
+		return renderMap(v, plainMapBranch(u, v), inner, path)
 	case []any:
-		return render(v, onlyBranch(u, avro.Array), path)
+		return render(v, onlyBranch(u, avro.Array), inner, path)
 	default:
 		return v, nil
 	}
 }
 
-// branchName is the name the codec gives a union branch in a wrapper: the
-// full name of a named type, otherwise the type, with ".<logicalType>" for a
-// primitive with a logical type ("bytes.decimal", "map", "ns.money").
-func branchName(sch avro.Schema) string {
-	sch = deref(sch)
-	if n, ok := sch.(avro.NamedSchema); ok {
-		return n.FullName()
-	}
-	name := string(sch.Type())
-	if p, ok := sch.(*avro.PrimitiveSchema); ok && p.Logical() != nil {
-		name += "." + string(p.Logical().Type())
-	}
-	return name
-}
-
-func branchNamed(u *avro.UnionSchema, name string) avro.Schema {
-	for _, b := range u.Types() {
-		if branchName(b) == name {
-			return deref(b)
-		}
-	}
-	return nil
-}
-
 // onlyBranch returns the single branch of u with one of the given types, or
-// nil when there is none or more than one: an unwrapped value does not say
-// which of two record branches it came from.
+// nil when there is none or more than one: a plain value does not say which
+// of two record branches it came from.
 func onlyBranch(u *avro.UnionSchema, types ...avro.Type) avro.Schema {
 	var found avro.Schema
 	for _, b := range u.Types() {
@@ -259,18 +230,61 @@ func onlyBranch(u *avro.UnionSchema, types ...avro.Type) avro.Schema {
 	return found
 }
 
-func renderMap(v map[string]any, sch avro.Schema, path string) (map[string]any, error) {
+// plainMapBranch returns the branch of u a plain (unwrapped) map value v came
+// from: the map branch, or a record branch whose field names are exactly the
+// keys of v (the decoder writes every field). When that leaves more or fewer
+// than one candidate, it returns nil and the entries get the fewest exact
+// digits: once commons has unwrapped the value, nothing else says which
+// branch it was.
+func plainMapBranch(u *avro.UnionSchema, v map[string]any) avro.Schema {
+	var found avro.Schema
+	for _, b := range u.Types() {
+		switch b := deref(b).(type) {
+		case *avro.MapSchema:
+		case *avro.RecordSchema:
+			if !sameKeys(b, v) {
+				continue
+			}
+		default:
+			continue
+		}
+		if found != nil {
+			return nil
+		}
+		found = deref(b)
+	}
+	return found
+}
+
+func sameKeys(r *avro.RecordSchema, v map[string]any) bool {
+	if len(r.Fields()) != len(v) {
+		return false
+	}
+	for _, f := range r.Fields() {
+		if _, ok := v[f.Name()]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func renderMap(v map[string]any, sch avro.Schema, at position, path string) (map[string]any, error) {
 	if !Contains(v) {
 		return v, nil
 	}
 	childOf := mapChildren(sch)
+	kind := mapValue
+	if _, ok := sch.(*avro.RecordSchema); ok {
+		kind = recordField
+	}
+	child := at.child(kind)
 	out := make(map[string]any, len(v))
 	for k, item := range v {
 		p := k
 		if path != "" {
 			p = path + "." + k
 		}
-		r, err := render(item, childOf(k), p)
+		r, err := render(item, childOf(k), child, p)
 		if err != nil {
 			return nil, err
 		}
