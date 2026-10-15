@@ -58,11 +58,18 @@ type Config struct {
 	Retries uint8 `json:"retries" default:"0"`
 }
 
-// Validate rejects an index that is neither a static name nor a valid Go
-// template, at configuration time as before the SDK v0.15 move, and runs the
-// middleware validations it would otherwise shadow.
+// Validate rejects, at configuration time as before the SDK v0.15 move, an
+// index that is neither a static name nor a valid Go template and an unknown
+// sdk.record.format, and runs the middleware
+// validations it would otherwise shadow.
 func (c *Config) Validate(ctx context.Context) error {
 	if err := c.DefaultDestinationMiddleware.Validate(ctx); err != nil {
+		return err
+	}
+	// DefaultDestinationMiddleware.Validate only finds Validate methods with a
+	// value receiver, so it skips the record format check, and the SDK's Open
+	// drops that error too (ConduitIO/conduit-connector-sdk#409).
+	if err := c.DestinationWithRecordFormat.Validate(ctx); err != nil {
 		return err
 	}
 	if _, err := c.IndexFunction(); err != nil {
