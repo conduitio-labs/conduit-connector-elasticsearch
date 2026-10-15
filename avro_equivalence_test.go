@@ -23,13 +23,14 @@ package elasticsearch_test
 //   - destination: sdk.schema.extract.{key,payload}.enabled (default true)
 //     decodes Avro-encoded keys and payloads into opencdc.StructuredData before
 //     Write sees them, and Write turns that into the Elasticsearch document;
-//   - source: sdk.schema.extract.key.enabled (default true) derives an Avro
-//     schema from the structured key {"id": <document id>}, registers it and
-//     encodes the key with it. The payload is raw JSON and is not touched.
+//   - source: the key {"id": <document id>} leaves as structured data with no
+//     schema. sdk.schema.extract.key.enabled defaults to false for this source
+//     (see source.NewSource), which is what SDK v0.12 effectively did. The
+//     payload is raw JSON and is not touched.
 //
 // The fixtures in testdata/avro_equivalence_fixtures.json were produced by
 // this test on the previous main (SDK v0.12.0, conduit-commons v0.6.0, codec
-// hamba/avro v2.31.0) with AVRO_FIXTURE_GEN=1. The test now runs the same
+// hamba/avro v2.28.0) with AVRO_FIXTURE_GEN=1. The test now runs the same
 // cases through the current module and requires identical results. The
 // fixtures are frozen: never regenerate them with the new codec. Invariant 6:
 // schema handling never silently mangles data.
@@ -42,6 +43,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -127,6 +129,17 @@ type destinationCase struct {
 // still what the destination decodes.
 var unorderedCases = map[string]bool{"map-long": true}
 
+// rawPayloads holds the payload bytes of cases built with raw: bytes no Go
+// value encodes to (union branches the encoder rejects as a plain map, and
+// malformed input), handed to the destination as they are.
+var rawPayloads = map[string][]byte{}
+
+// raw is a case whose payload is b instead of an encoded value.
+func raw(name, schema string, b []byte) destinationCase {
+	rawPayloads[name] = b
+	return destinationCase{name: name, schema: schema}
+}
+
 func ts(s string) time.Time {
 	t, err := time.Parse(time.RFC3339Nano, s)
 	if err != nil {
@@ -171,7 +184,7 @@ func destinationCases() []destinationCase {
 		{"array-empty", rec(field("f", `{"type":"array","items":"string"}`)), opencdc.StructuredData{"f": []any{}}},
 		{"array-empty-in-record", rec(field("f", `{"type":"record","name":"inner","fields":[{"name":"a","type":{"type":"array","items":"int"}}]}`)), opencdc.StructuredData{"f": map[string]any{"a": []any{}}}},
 		{"array-empty-in-union", rec(field("f", `["null",{"type":"array","items":"int"}]`)), opencdc.StructuredData{"f": []any{}}},
-		{"array-of-empty-arrays", rec(field("f", `{"type":{"type":"array","items":{"type":"array","items":"int"}}}`)), opencdc.StructuredData{"f": []any{[]any{}, []any{1}}}},
+		{"array-of-empty-arrays", rec(field("f", `{"type":"array","items":{"type":"array","items":"int"}}`)), opencdc.StructuredData{"f": []any{[]any{}, []any{1}}}},
 		{"map-of-empty-array", rec(field("f", `{"type":"map","values":{"type":"array","items":"int"}}`)), opencdc.StructuredData{"f": map[string]any{"k": []any{}}}},
 		{"array-nullable", rec(field("f", `{"type":"array","items":["null","string"]}`)), opencdc.StructuredData{"f": []any{"a", nil}}},
 		{"map-long", rec(field("f", `{"type":"map","values":"long"}`)), opencdc.StructuredData{"f": map[string]any{"b": int64(2), "a": int64(1)}}},
@@ -195,6 +208,87 @@ func destinationCases() []destinationCase {
 		{"extra-map-key-ignored", rec(field("f", `"string"`)), opencdc.StructuredData{"f": "x", "notInSchema": "y"}},
 		{"missing-field", rec(field("f", `"string"`), field("g", `"string"`)), opencdc.StructuredData{"f": "x"}},
 		{"type-mismatch", rec(field("f", `"int"`)), opencdc.StructuredData{"f": "not an int"}},
+		// Cases added in review: union branches as raw bytes (the Debezium
+		// envelope shape), numeric and logical-type edges, Go value shapes the
+		// encoder may or may not accept, and malformed input.
+		raw("union-record-raw", rec(field("f", `["null",{"type":"record","name":"inner","fields":[{"name":"a","type":"int"}]}]`)), []byte{0x02, 0x02}),
+		raw("union-record-null-raw", rec(field("f", `["null",{"type":"record","name":"inner","fields":[{"name":"a","type":"int"}]}]`)), []byte{0x00}),
+		{"union3-string", rec(field("f", `["null","string","long"]`)), opencdc.StructuredData{"f": "x"}},
+		{"union3-long", rec(field("f", `["null","string","long"]`)), opencdc.StructuredData{"f": int64(9)}},
+		raw("union3-long-raw", rec(field("f", `["null","string","long"]`)), []byte{0x04, 0x12}),
+		raw("union-string-record-raw", rec(field("f", `["string",{"type":"record","name":"inner","fields":[{"name":"a","type":"int"}]}]`)), []byte{0x02, 0x02}),
+		raw("union-enum-raw", rec(field("f", `["null",{"type":"enum","name":"col","symbols":["R","G"]}]`)), []byte{0x02, 0x02}),
+		raw("union-fixed-raw", rec(field("f", `["null",{"type":"fixed","name":"two","size":2}]`)), []byte{0x02, 0x07, 0x08}),
+		raw("union-map-raw", rec(field("f", `["null",{"type":"map","values":"int"}]`)), []byte{0x02, 0x02, 0x02, 'k', 0x04, 0x00}),
+		raw("array-of-union-record-raw", rec(field("f", `{"type":"array","items":["null",{"type":"record","name":"inner","fields":[{"name":"a","type":"int"}]}]}`)), []byte{0x04, 0x02, 0x06, 0x00, 0x00}),
+		raw("array-of-empty-arrays-raw", rec(field("f", `{"type":"array","items":{"type":"array","items":"int"}}`)), []byte{0x04, 0x00, 0x02, 0x02, 0x00, 0x00}),
+		raw("array-negative-block-raw", rec(field("f", `{"type":"array","items":"int"}`)), []byte{0x03, 0x04, 0x02, 0x04, 0x00}),
+		raw("map-empty-raw", rec(field("f", `{"type":"map","values":"int"}`)), []byte{0x00}),
+		{"map-of-empty-map", rec(field("f", `{"type":"map","values":{"type":"map","values":"int"}}`)), opencdc.StructuredData{"f": map[string]any{"k": map[string]any{}}}},
+		{"double-nan", rec(field("f", `"double"`)), opencdc.StructuredData{"f": math.NaN()}},
+		{"double-inf", rec(field("f", `"double"`)), opencdc.StructuredData{"f": math.Inf(1)}},
+		{"double-neginf", rec(field("f", `"double"`)), opencdc.StructuredData{"f": math.Inf(-1)}},
+		{"float-nan", rec(field("f", `"float"`)), opencdc.StructuredData{"f": float32(math.NaN())}},
+		{"float-max", rec(field("f", `"float"`)), opencdc.StructuredData{"f": float32(math.MaxFloat32)}},
+		{"float-from-float64", rec(field("f", `"float"`)), opencdc.StructuredData{"f": 0.1}},
+		{"double-from-float32", rec(field("f", `"double"`)), opencdc.StructuredData{"f": float32(0.1)}},
+		{"long-max", rec(field("f", `"long"`)), opencdc.StructuredData{"f": int64(math.MaxInt64)}},
+		{"long-min", rec(field("f", `"long"`)), opencdc.StructuredData{"f": int64(math.MinInt64)}},
+		{"int-max", rec(field("f", `"int"`)), opencdc.StructuredData{"f": int32(math.MaxInt32)}},
+		{"int-overflow", rec(field("f", `"int"`)), opencdc.StructuredData{"f": int64(1) << 40}},
+		{"int-from-int64", rec(field("f", `"int"`)), opencdc.StructuredData{"f": int64(5)}},
+		{"long-from-uint64", rec(field("f", `"long"`)), opencdc.StructuredData{"f": uint64(math.MaxUint64)}},
+		{"long-from-float", rec(field("f", `"long"`)), opencdc.StructuredData{"f": 1.5}},
+		{"long-from-string", rec(field("f", `"long"`)), opencdc.StructuredData{"f": "12"}},
+		{"int-from-bool", rec(field("f", `"int"`)), opencdc.StructuredData{"f": true}},
+		{"string-from-bytes", rec(field("f", `"string"`)), opencdc.StructuredData{"f": []byte("ab")}},
+		{"bytes-from-string", rec(field("f", `"bytes"`)), opencdc.StructuredData{"f": "ab"}},
+		raw("string-invalid-utf8-raw", rec(field("f", `"string"`)), []byte{0x04, 0xff, 0xfe}),
+		{"string-from-int", rec(field("f", `"string"`)), opencdc.StructuredData{"f": 5}},
+		{"map-int-keys", rec(field("f", `{"type":"map","values":"string"}`)), opencdc.StructuredData{"f": map[int]any{1: "a"}}},
+		{"map-typed-values", rec(field("f", `{"type":"map","values":"string"}`)), opencdc.StructuredData{"f": map[string]string{"k": "v"}}},
+		{"array-typed", rec(field("f", `{"type":"array","items":"long"}`)), opencdc.StructuredData{"f": []int64{1, 2}}},
+		{"array-typed-empty", rec(field("f", `{"type":"array","items":"long"}`)), opencdc.StructuredData{"f": []int64{}}},
+		{"array-nil", rec(field("f", `{"type":"array","items":"long"}`)), opencdc.StructuredData{"f": []any(nil)}},
+		{"map-nil", rec(field("f", `{"type":"map","values":"long"}`)), opencdc.StructuredData{"f": map[string]any(nil)}},
+		{"bytes-nil", rec(field("f", `"bytes"`)), opencdc.StructuredData{"f": []byte(nil)}},
+		{"map-nullable-null", rec(field("f", `{"type":"map","values":["null","string"]}`)), opencdc.StructuredData{"f": map[string]any{"k": nil}}},
+		{"enum-bad-symbol", rec(field("f", `{"type":"enum","name":"c","symbols":["A"]}`)), opencdc.StructuredData{"f": "Z"}},
+		raw("enum-bad-index-raw", rec(field("f", `{"type":"enum","name":"c","symbols":["A"]}`)), []byte{0x08}),
+		{"fixed-wrong-size", rec(field("f", `{"type":"fixed","name":"four","size":4}`)), opencdc.StructuredData{"f": [2]byte{1, 2}}},
+		{"fixed-from-slice", rec(field("f", `{"type":"fixed","name":"four","size":4}`)), opencdc.StructuredData{"f": []byte{1, 2, 3, 4}}},
+		{"ts-millis-far-future", rec(field("f", `{"type":"long","logicalType":"timestamp-millis"}`)), opencdc.StructuredData{"f": ts("9999-12-31T23:59:59.999Z")}},
+		{"ts-millis-year1", rec(field("f", `{"type":"long","logicalType":"timestamp-millis"}`)), opencdc.StructuredData{"f": ts("0001-01-01T00:00:00Z")}},
+		{"ts-micros-far-future", rec(field("f", `{"type":"long","logicalType":"timestamp-micros"}`)), opencdc.StructuredData{"f": ts("9999-12-31T23:59:59.999999Z")}},
+		{"ts-micros-year1", rec(field("f", `{"type":"long","logicalType":"timestamp-micros"}`)), opencdc.StructuredData{"f": ts("0001-01-01T00:00:00Z")}},
+		raw("ts-micros-maxlong-raw", rec(field("f", `{"type":"long","logicalType":"timestamp-micros"}`)), []byte{0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01}),
+		raw("ts-millis-maxlong-raw", rec(field("f", `{"type":"long","logicalType":"timestamp-millis"}`)), []byte{0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01}),
+		{"ts-millis-nonutc", rec(field("f", `{"type":"long","logicalType":"timestamp-millis"}`)), opencdc.StructuredData{"f": time.Date(2024, 1, 1, 12, 0, 0, 0, time.FixedZone("X", 5*3600))}},
+		{"ts-nanos-truncated", rec(field("f", `{"type":"long","logicalType":"timestamp-micros"}`)), opencdc.StructuredData{"f": ts("2024-01-01T00:00:00.123456789Z")}},
+		{"date-pre-epoch", rec(field("f", `{"type":"int","logicalType":"date"}`)), opencdc.StructuredData{"f": ts("1900-01-01T00:00:00Z")}},
+		{"date-with-time", rec(field("f", `{"type":"int","logicalType":"date"}`)), opencdc.StructuredData{"f": ts("2024-01-01T23:59:59Z")}},
+		raw("time-millis-over-24h-raw", rec(field("f", `{"type":"int","logicalType":"time-millis"}`)), []byte{0x80, 0xdc, 0xa4, 0x52}),
+		{"ts-from-int64", rec(field("f", `{"type":"long","logicalType":"timestamp-millis"}`)), opencdc.StructuredData{"f": int64(1700000000000)}},
+		{"decimal-highprec", rec(field("f", `{"type":"bytes","logicalType":"decimal","precision":38,"scale":10}`)), opencdc.StructuredData{"f": func() *big.Rat { r, _ := new(big.Rat).SetString("12345678901234567890.0123456789"); return r }()}},
+		{"decimal-rounding", rec(field("f", `{"type":"bytes","logicalType":"decimal","precision":10,"scale":2}`)), opencdc.StructuredData{"f": big.NewRat(1, 3)}},
+		{"decimal-fixed-neg", rec(field("f", `{"type":"fixed","name":"dec","size":4,"logicalType":"decimal","precision":8,"scale":2}`)), opencdc.StructuredData{"f": big.NewRat(-1, 100)}},
+		{"decimal-from-float", rec(field("f", `{"type":"bytes","logicalType":"decimal","precision":10,"scale":2}`)), opencdc.StructuredData{"f": 1.25}},
+		raw("decimal-zero-raw", rec(field("f", `{"type":"bytes","logicalType":"decimal","precision":10,"scale":2}`)), []byte{0x00}),
+		{"uuid-invalid", rec(field("f", `{"type":"string","logicalType":"uuid"}`)), opencdc.StructuredData{"f": "nope"}},
+		{"empty-record", `{"type":"record","name":"payload","fields":[]}`, opencdc.StructuredData{}},
+		{"nested-null-in-record", rec(field("f", `{"type":"record","name":"inner","fields":[{"name":"a","type":["null","int"]}]}`)), opencdc.StructuredData{"f": map[string]any{"a": nil}}},
+		raw("truncated-raw", rec(field("f", `"string"`)), []byte{0x10, 'a'}),
+		raw("empty-bytes-raw", rec(field("f", `"string"`)), []byte{}),
+		raw("trailing-garbage-raw", rec(field("f", `"int"`)), []byte{0x02, 0xff, 0xff}),
+		raw("bad-union-index-raw", rec(field("f", `["null","string"]`)), []byte{0x06}),
+		raw("huge-array-count-raw", rec(field("f", `{"type":"array","items":"int"}`)), []byte{0x80, 0x89, 0x7a}),
+		raw("negative-bytes-len-raw", rec(field("f", `"bytes"`)), []byte{0x03}),
+		raw("negative-string-len-raw", rec(field("f", `"string"`)), []byte{0x03}),
+		{"field-default-missing", rec(field("f", `"string"`), `{"name":"g","type":"int","default":7}`), opencdc.StructuredData{"f": "x"}},
+		{"nullable-default-missing", rec(field("f", `"string"`), `{"name":"g","type":["null","int"],"default":null}`), opencdc.StructuredData{"f": "x"}},
+		{"named-ref", `{"type":"record","name":"payload","fields":[{"name":"a","type":{"type":"record","name":"inner","fields":[{"name":"x","type":"int"}]}},{"name":"b","type":"inner"}]}`, opencdc.StructuredData{"a": map[string]any{"x": 1}, "b": map[string]any{"x": 2}}},
+		{"namespaced", `{"type":"record","name":"payload","namespace":"com.ex","fields":[{"name":"e","type":{"type":"enum","name":"E","symbols":["A","B"]}}]}`, opencdc.StructuredData{"e": "B"}},
+		{"structured-nested-sd", rec(field("f", `{"type":"record","name":"inner","fields":[{"name":"a","type":"int"}]}`)), opencdc.StructuredData{"f": opencdc.StructuredData{"a": 1}}},
 		{"every-type", rec(
 			field("b", `"boolean"`),
 			field("i", `"int"`),
@@ -229,35 +323,82 @@ func negZero() float64 {
 	return -z
 }
 
-// emptyArrayChange lists the cases where the move changes a result, and the
-// only kind of change it makes: an empty Avro array used to decode to a nil
-// slice, which the destination wrote to Elasticsearch as null; it now decodes
-// to an empty slice and is written as []. The cause is hamba/avro itself: this
-// module was on v2.28.0 (through conduit-commons v0.6.0), v2.29.0 started
-// returning empty slices, and the fork carries that. It is not a commons or
-// SDK change. Each entry pins the old and the new value, so the change cannot
-// spread to other shapes without failing the test.
+// acceptedChange is a difference from the frozen hamba/avro result that was
+// reviewed and accepted (DeVaris, 2026-10-15). In the frozen value of field
+// ("decoded", "bulk", "decodeError" or "writeError") every occurrence of from
+// is replaced with to before comparing; from must occur, so each entry pins
+// the old value as well as the new one, and a change cannot spread to another
+// case or field without failing the test.
+type acceptedChange struct {
+	field    string
+	from, to string
+}
+
+// emptyArray is the one kind of value change the move makes: every empty Avro
+// array, at any depth (top level, in a record, in a union, as a map value, as
+// an array item), used to decode to a nil slice, which the destination wrote
+// to Elasticsearch as null; it now decodes to an empty slice and is written as
+// []. The cause is hamba/avro itself: this module was on v2.28.0 (through
+// conduit-commons v0.6.0), v2.29.0 started returning empty slices, and the
+// fork carries that. It is not a commons or SDK change.
 //
 // The new value is the faithful one: null is also what the "null" branch of
 // ["null", {"type":"array"}] produces, so the old output could not tell an
 // empty array from a missing one.
-var emptyArrayChange = map[string]struct{ from, to, docFrom, docTo string }{
-	"array-empty": {
-		`map{"f": []any(nil)}`, `map{"f": []any{}}`,
-		`{"doc":{"f":null},"doc_as_upsert":true}`, `{"doc":{"f":[]},"doc_as_upsert":true}`,
-	},
-	"array-empty-in-record": {
-		`map{"f": map{"a": []any(nil)}}`, `map{"f": map{"a": []any{}}}`,
-		`{"doc":{"f":{"a":null}},"doc_as_upsert":true}`, `{"doc":{"f":{"a":[]}},"doc_as_upsert":true}`,
-	},
-	"array-empty-in-union": {
-		`map{"f": []any(nil)}`, `map{"f": []any{}}`,
-		`{"doc":{"f":null},"doc_as_upsert":true}`, `{"doc":{"f":[]},"doc_as_upsert":true}`,
-	},
-	"map-of-empty-array": {
-		`map{"f": map{"k": []any(nil)}}`, `map{"f": map{"k": []any{}}}`,
-		`{"doc":{"f":{"k":null}},"doc_as_upsert":true}`, `{"doc":{"f":{"k":[]}},"doc_as_upsert":true}`,
-	},
+func emptyArray(docFrom, docTo string) []acceptedChange {
+	return []acceptedChange{
+		{"decoded", "[]any(nil)", "[]any{}"},
+		{"bulk", docFrom, docTo},
+	}
+}
+
+// errorWording is the codec's wording for a negative string or bytes length:
+// hamba says ReadSTRING/ReadBYTES, the fork ReadString/ReadBytes. Same
+// failure, same place, and the record still fails the write.
+func errorWording(from, to string) []acceptedChange {
+	return []acceptedChange{
+		{"decodeError", from, to},
+		{"writeError", from, to},
+	}
+}
+
+var acceptedChanges = map[string][]acceptedChange{
+	"array-empty":               emptyArray(`{"doc":{"f":null}`, `{"doc":{"f":[]}`),
+	"array-empty-in-record":     emptyArray(`{"doc":{"f":{"a":null}}`, `{"doc":{"f":{"a":[]}}`),
+	"array-empty-in-union":      emptyArray(`{"doc":{"f":null}`, `{"doc":{"f":[]}`),
+	"map-of-empty-array":        emptyArray(`{"doc":{"f":{"k":null}}`, `{"doc":{"f":{"k":[]}}`),
+	"array-of-empty-arrays":     emptyArray(`{"doc":{"f":[null,[1]]}`, `{"doc":{"f":[[],[1]]}`),
+	"array-of-empty-arrays-raw": emptyArray(`{"doc":{"f":[null,[1]]}`, `{"doc":{"f":[[],[1]]}`),
+	"array-typed-empty":         emptyArray(`{"doc":{"f":null}`, `{"doc":{"f":[]}`),
+	"array-nil":                 emptyArray(`{"doc":{"f":null}`, `{"doc":{"f":[]}`),
+	"negative-string-len-raw":   errorWording("ReadSTRING", "ReadString"),
+	"negative-bytes-len-raw":    errorWording("ReadBYTES", "ReadBytes"),
+}
+
+// applyAccepted rewrites the frozen fixture w with the accepted changes for
+// its case, failing for any change whose old value is not in the fixture.
+func applyAccepted(t *testing.T, w *destinationFixture) {
+	t.Helper()
+	for _, c := range acceptedChanges[w.Name] {
+		var f *string
+		switch c.field {
+		case "decoded":
+			f = &w.Decoded
+		case "bulk":
+			f = &w.Bulk
+		case "decodeError":
+			f = &w.DecodeError
+		case "writeError":
+			f = &w.WriteError
+		default:
+			t.Fatalf("%s: unknown field %q in acceptedChanges", w.Name, c.field)
+		}
+		if !strings.Contains(*f, c.from) {
+			t.Errorf("%s: frozen %s does not contain %q, the accepted change is stale:\n%s", w.Name, c.field, c.from, *f)
+			continue
+		}
+		*f = strings.ReplaceAll(*f, c.from, c.to)
+	}
 }
 
 // sourceDocIDs are the Elasticsearch document IDs the source turns into keys.
@@ -389,13 +530,16 @@ func TestAvroEquivalence(t *testing.T) {
 		return
 	}
 
-	compareDestination(t, cases, wantDst, got.Destination)
+	compareDestination(t, cases, wantDst, got.Destination, codec != "github.com/hamba/avro/v2")
 	compareSource(t, want.Source, got.Source)
 }
 
 // compareDestination checks every destination result against its frozen
 // fixture. wantDst is consumed.
-func compareDestination(t *testing.T, cases []destinationCase, wantDst map[string]destinationFixture, got []destinationFixture) {
+//
+// applyChanges is false when this build still runs on hamba/avro (a self-check
+// of the generator), true on the new codec.
+func compareDestination(t *testing.T, cases []destinationCase, wantDst map[string]destinationFixture, got []destinationFixture, applyChanges bool) {
 	t.Helper()
 	for _, g := range got {
 		w, ok := wantDst[g.Name]
@@ -412,16 +556,8 @@ func compareDestination(t *testing.T, cases []destinationCase, wantDst map[strin
 		}
 		compareField(t, g.Name, "key Avro bytes", w.KeyAvro, g.KeyAvro)
 		compareField(t, g.Name, "encode error", w.EncodeError, g.EncodeError)
-		if c, ok := emptyArrayChange[g.Name]; ok {
-			// Pin both sides: the frozen hamba/avro output and what the
-			// fork produces from the same bytes.
-			compareField(t, g.Name, "frozen decoded value", c.from, w.Decoded)
-			compareField(t, g.Name, "decoded value", c.to, g.Decoded)
-			if !strings.Contains(w.Bulk, c.docFrom) {
-				t.Errorf("%s: frozen bulk body does not contain %s:\n%s", g.Name, c.docFrom, w.Bulk)
-			}
-			w.Decoded = c.to
-			w.Bulk = strings.Replace(w.Bulk, c.docFrom, c.docTo, 1)
+		if applyChanges {
+			applyAccepted(t, &w)
 		}
 		compareField(t, g.Name, "decoded value", w.Decoded, g.Decoded)
 		compareField(t, g.Name, "decode error", w.DecodeError, g.DecodeError)
@@ -437,9 +573,9 @@ func compareDestination(t *testing.T, cases []destinationCase, wantDst map[strin
 	for _, tc := range cases {
 		caseNames[tc.name] = true
 	}
-	for name := range emptyArrayChange {
+	for name := range acceptedChanges {
 		if !caseNames[name] {
-			t.Errorf("%s: listed in emptyArrayChange but not a case", name)
+			t.Errorf("%s: listed in acceptedChanges but not a case", name)
 		}
 	}
 }
@@ -508,6 +644,9 @@ func runDestinationCase(ctx context.Context, t *testing.T, tc destinationCase, f
 	out.KeyAvro = base64.StdEncoding.EncodeToString(key)
 
 	payload, err := sch.Marshal(tc.value)
+	if b, ok := rawPayloads[tc.name]; ok {
+		payload, err = b, nil
+	}
 	if err != nil {
 		out.EncodeError = err.Error()
 	} else {

@@ -218,11 +218,12 @@
     },
     {
       "name": "array-of-empty-arrays",
-      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":{\"type\":\"array\",\"items\":{\"type\":\"array\",\"items\":\"int\"}}}}]}",
-      "payloadAvro": "",
-      "encodeError": "failed to parse schema of type avro: could not parse avro schema: avro: unknown type: map[type:map[items:map[items:int type:array] type:array]]",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"array\",\"items\":\"int\"}}}]}",
+      "payloadAvro": "AwoAAQICAAA=",
       "keyAvro": "MmtleS1hcnJheS1vZi1lbXB0eS1hcnJheXM=",
-      "written": 0
+      "decoded": "map{\"f\": []any{[]any(nil), []any{1}}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-of-empty-arrays\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[null,[1]]},\"doc_as_upsert\":true}\n",
+      "written": 1
     },
     {
       "name": "map-of-empty-array",
@@ -428,6 +429,693 @@
       "encodeError": "failed to marshal data with schema equivalence.type-mismatch.payload:1 (id: 95): could not marshal into avro: f: avro: string is unsupported for Avro int",
       "keyAvro": "ImtleS10eXBlLW1pc21hdGNo",
       "written": 0
+    },
+    {
+      "name": "union-record-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}]}]}",
+      "payloadAvro": "AgI=",
+      "keyAvro": "KGtleS11bmlvbi1yZWNvcmQtcmF3",
+      "decoded": "map{\"f\": map{\"a\": 1}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union-record-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"a\":1}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "union-record-null-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}]}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "MmtleS11bmlvbi1yZWNvcmQtbnVsbC1yYXc=",
+      "decoded": "map{\"f\": \u003cnil\u003e}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union-record-null-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "union3-string",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",\"string\",\"long\"]}]}",
+      "payloadAvro": "AgJ4",
+      "keyAvro": "ImtleS11bmlvbjMtc3RyaW5n",
+      "decoded": "map{\"f\": \"x\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union3-string\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"x\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "union3-long",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",\"string\",\"long\"]}]}",
+      "payloadAvro": "BBI=",
+      "keyAvro": "HmtleS11bmlvbjMtbG9uZw==",
+      "decoded": "map{\"f\": 9}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union3-long\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":9},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "union3-long-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",\"string\",\"long\"]}]}",
+      "payloadAvro": "BBI=",
+      "keyAvro": "JmtleS11bmlvbjMtbG9uZy1yYXc=",
+      "decoded": "map{\"f\": 9}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union3-long-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":9},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "union-string-record-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"string\",{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}]}]}",
+      "payloadAvro": "AgI=",
+      "keyAvro": "NmtleS11bmlvbi1zdHJpbmctcmVjb3JkLXJhdw==",
+      "decoded": "map{\"f\": map{\"inner\": map{\"a\": 1}}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union-string-record-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"inner\":{\"a\":1}}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "union-enum-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",{\"type\":\"enum\",\"name\":\"col\",\"symbols\":[\"R\",\"G\"]}]}]}",
+      "payloadAvro": "AgI=",
+      "keyAvro": "JGtleS11bmlvbi1lbnVtLXJhdw==",
+      "decoded": "map{\"f\": \"G\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union-enum-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"G\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "union-fixed-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",{\"type\":\"fixed\",\"name\":\"two\",\"size\":2}]}]}",
+      "payloadAvro": "AgcI",
+      "keyAvro": "JmtleS11bmlvbi1maXhlZC1yYXc=",
+      "decoded": "map{\"f\": [2]uint8{0x7, 0x8}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union-fixed-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[7,8]},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "union-map-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",{\"type\":\"map\",\"values\":\"int\"}]}]}",
+      "payloadAvro": "AgICawQA",
+      "keyAvro": "ImtleS11bmlvbi1tYXAtcmF3",
+      "decoded": "map{\"f\": map{\"k\": 2}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-union-map-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"k\":2}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-of-union-record-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":[\"null\",{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}]}}]}",
+      "payloadAvro": "BAIGAAA=",
+      "keyAvro": "OmtleS1hcnJheS1vZi11bmlvbi1yZWNvcmQtcmF3",
+      "decoded": "map{\"f\": []any{map{\"inner\": map{\"a\": 3}}, \u003cnil\u003e}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-of-union-record-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[{\"inner\":{\"a\":3}},null]},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-of-empty-arrays-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"array\",\"items\":\"int\"}}}]}",
+      "payloadAvro": "BAACAgAA",
+      "keyAvro": "OmtleS1hcnJheS1vZi1lbXB0eS1hcnJheXMtcmF3",
+      "decoded": "map{\"f\": []any{[]any(nil), []any{1}}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-of-empty-arrays-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[null,[1]]},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-negative-block-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":\"int\"}}]}",
+      "payloadAvro": "AwQCBAA=",
+      "keyAvro": "OGtleS1hcnJheS1uZWdhdGl2ZS1ibG9jay1yYXc=",
+      "decoded": "map{\"f\": []any{1, 2}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-negative-block-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[1,2]},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "map-empty-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":\"int\"}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "ImtleS1tYXAtZW1wdHktcmF3",
+      "decoded": "map{\"f\": map{}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-empty-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "map-of-empty-map",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":{\"type\":\"map\",\"values\":\"int\"}}}]}",
+      "payloadAvro": "AQYCawAA",
+      "keyAvro": "KGtleS1tYXAtb2YtZW1wdHktbWFw",
+      "decoded": "map{\"f\": map{\"k\": map{}}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-of-empty-map\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"k\":{}}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "double-nan",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"double\"}]}",
+      "payloadAvro": "AQAAAAAA+H8=",
+      "keyAvro": "HGtleS1kb3VibGUtbmFu",
+      "decoded": "map{\"f\": NaN}",
+      "written": 0,
+      "writeError": "failed to prepare metadata with key={\"id\":\"key-double-nan\"}: json: unsupported value: NaN"
+    },
+    {
+      "name": "double-inf",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"double\"}]}",
+      "payloadAvro": "AAAAAAAA8H8=",
+      "keyAvro": "HGtleS1kb3VibGUtaW5m",
+      "decoded": "map{\"f\": +Inf}",
+      "written": 0,
+      "writeError": "failed to prepare metadata with key={\"id\":\"key-double-inf\"}: json: unsupported value: +Inf"
+    },
+    {
+      "name": "double-neginf",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"double\"}]}",
+      "payloadAvro": "AAAAAAAA8P8=",
+      "keyAvro": "ImtleS1kb3VibGUtbmVnaW5m",
+      "decoded": "map{\"f\": -Inf}",
+      "written": 0,
+      "writeError": "failed to prepare metadata with key={\"id\":\"key-double-neginf\"}: json: unsupported value: -Inf"
+    },
+    {
+      "name": "float-nan",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"float\"}]}",
+      "payloadAvro": "AADAfw==",
+      "keyAvro": "GmtleS1mbG9hdC1uYW4=",
+      "decoded": "map{\"f\": NaN}",
+      "written": 0,
+      "writeError": "failed to prepare metadata with key={\"id\":\"key-float-nan\"}: json: unsupported value: NaN"
+    },
+    {
+      "name": "float-max",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"float\"}]}",
+      "payloadAvro": "//9/fw==",
+      "keyAvro": "GmtleS1mbG9hdC1tYXg=",
+      "decoded": "map{\"f\": 3.4028235e+38}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-float-max\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":3.4028235e+38},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "float-from-float64",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"float\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.float-from-float64.payload:1 (id: 135): could not marshal into avro: f: avro: float64 is unsupported for Avro float",
+      "keyAvro": "LGtleS1mbG9hdC1mcm9tLWZsb2F0NjQ=",
+      "written": 0
+    },
+    {
+      "name": "double-from-float32",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"double\"}]}",
+      "payloadAvro": "AAAAoJmZuT8=",
+      "keyAvro": "LmtleS1kb3VibGUtZnJvbS1mbG9hdDMy",
+      "decoded": "map{\"f\": 0.10000000149011612}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-double-from-float32\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":0.10000000149011612},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "long-max",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"long\"}]}",
+      "payloadAvro": "/v//////////AQ==",
+      "keyAvro": "GGtleS1sb25nLW1heA==",
+      "decoded": "map{\"f\": 9223372036854775807}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-long-max\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":9223372036854775807},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "long-min",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"long\"}]}",
+      "payloadAvro": "////////////AQ==",
+      "keyAvro": "GGtleS1sb25nLW1pbg==",
+      "decoded": "map{\"f\": -9223372036854775808}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-long-min\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":-9223372036854775808},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "int-max",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"int\"}]}",
+      "payloadAvro": "/v///w8=",
+      "keyAvro": "FmtleS1pbnQtbWF4",
+      "decoded": "map{\"f\": 2147483647}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-int-max\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":2147483647},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "int-overflow",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"int\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.int-overflow.payload:1 (id: 145): could not marshal into avro: f: avro: int64 is unsupported for Avro int",
+      "keyAvro": "IGtleS1pbnQtb3ZlcmZsb3c=",
+      "written": 0
+    },
+    {
+      "name": "int-from-int64",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"int\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.int-from-int64.payload:1 (id: 147): could not marshal into avro: f: avro: int64 is unsupported for Avro int",
+      "keyAvro": "JGtleS1pbnQtZnJvbS1pbnQ2NA==",
+      "written": 0
+    },
+    {
+      "name": "long-from-uint64",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"long\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.long-from-uint64.payload:1 (id: 149): could not marshal into avro: f: avro: uint64 is unsupported for Avro long",
+      "keyAvro": "KGtleS1sb25nLWZyb20tdWludDY0",
+      "written": 0
+    },
+    {
+      "name": "long-from-float",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"long\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.long-from-float.payload:1 (id: 151): could not marshal into avro: f: avro: float64 is unsupported for Avro long",
+      "keyAvro": "JmtleS1sb25nLWZyb20tZmxvYXQ=",
+      "written": 0
+    },
+    {
+      "name": "long-from-string",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"long\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.long-from-string.payload:1 (id: 153): could not marshal into avro: f: avro: string is unsupported for Avro long",
+      "keyAvro": "KGtleS1sb25nLWZyb20tc3RyaW5n",
+      "written": 0
+    },
+    {
+      "name": "int-from-bool",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"int\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.int-from-bool.payload:1 (id: 155): could not marshal into avro: f: avro: bool is unsupported for Avro int",
+      "keyAvro": "ImtleS1pbnQtZnJvbS1ib29s",
+      "written": 0
+    },
+    {
+      "name": "string-from-bytes",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.string-from-bytes.payload:1 (id: 157): could not marshal into avro: f: avro: []uint8 is unsupported for Avro string",
+      "keyAvro": "KmtleS1zdHJpbmctZnJvbS1ieXRlcw==",
+      "written": 0
+    },
+    {
+      "name": "bytes-from-string",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"bytes\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.bytes-from-string.payload:1 (id: 159): could not marshal into avro: f: avro: string is unsupported for Avro bytes",
+      "keyAvro": "KmtleS1ieXRlcy1mcm9tLXN0cmluZw==",
+      "written": 0
+    },
+    {
+      "name": "string-invalid-utf8-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "BP/+",
+      "keyAvro": "NmtleS1zdHJpbmctaW52YWxpZC11dGY4LXJhdw==",
+      "decoded": "map{\"f\": \"\\xff\\xfe\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-string-invalid-utf8-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"\\ufffd\\ufffd\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "string-from-int",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.string-from-int.payload:1 (id: 163): could not marshal into avro: f: avro: int is unsupported for Avro string",
+      "keyAvro": "JmtleS1zdHJpbmctZnJvbS1pbnQ=",
+      "written": 0
+    },
+    {
+      "name": "map-int-keys",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.map-int-keys.payload:1 (id: 165): could not marshal into avro: f: avro: map[int]interface {} is unsupported for Avro map",
+      "keyAvro": "IGtleS1tYXAtaW50LWtleXM=",
+      "written": 0
+    },
+    {
+      "name": "map-typed-values",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}",
+      "payloadAvro": "AQgCawJ2AA==",
+      "keyAvro": "KGtleS1tYXAtdHlwZWQtdmFsdWVz",
+      "decoded": "map{\"f\": map{\"k\": \"v\"}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-typed-values\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"k\":\"v\"}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-typed",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":\"long\"}}]}",
+      "payloadAvro": "AwQCBAA=",
+      "keyAvro": "HmtleS1hcnJheS10eXBlZA==",
+      "decoded": "map{\"f\": []any{1, 2}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-typed\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":[1,2]},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-typed-empty",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":\"long\"}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "KmtleS1hcnJheS10eXBlZC1lbXB0eQ==",
+      "decoded": "map{\"f\": []any(nil)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-typed-empty\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "array-nil",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":\"long\"}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "GmtleS1hcnJheS1uaWw=",
+      "decoded": "map{\"f\": []any(nil)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-array-nil\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "map-nil",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":\"long\"}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "FmtleS1tYXAtbmls",
+      "decoded": "map{\"f\": map{}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-nil\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "bytes-nil",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"bytes\"}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "GmtleS1ieXRlcy1uaWw=",
+      "decoded": "map{\"f\": []byte{}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-bytes-nil\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "map-nullable-null",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]}}]}",
+      "payloadAvro": "AQYCawAA",
+      "keyAvro": "KmtleS1tYXAtbnVsbGFibGUtbnVsbA==",
+      "decoded": "map{\"f\": map{\"k\": \u003cnil\u003e}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-map-nullable-null\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"k\":null}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "enum-bad-symbol",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"enum\",\"name\":\"c\",\"symbols\":[\"A\"]}}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.enum-bad-symbol.payload:1 (id: 181): could not marshal into avro: f: avro: unknown enum symbol: Z",
+      "keyAvro": "JmtleS1lbnVtLWJhZC1zeW1ib2w=",
+      "written": 0
+    },
+    {
+      "name": "enum-bad-index-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"enum\",\"name\":\"c\",\"symbols\":[\"A\"]}}]}",
+      "payloadAvro": "CA==",
+      "keyAvro": "LGtleS1lbnVtLWJhZC1pbmRleC1yYXc=",
+      "decodeError": "failed to unmarshal data with schema equivalence.enum-bad-index-raw.payload:1 (id: 183): could not unmarshal from avro: opencdc.StructuredData: avro: decode enum symbol: unknown enum symbol",
+      "written": 0,
+      "writeError": "record 0: failed to decode payload.after: failed to unmarshal bytes with schema: failed to unmarshal data with schema equivalence.enum-bad-index-raw.payload:1 (id: 183): could not unmarshal from avro: opencdc.StructuredData: avro: decode enum symbol: unknown enum symbol"
+    },
+    {
+      "name": "fixed-wrong-size",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"fixed\",\"name\":\"four\",\"size\":4}}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.fixed-wrong-size.payload:1 (id: 185): could not marshal into avro: f: avro: [2]uint8 is unsupported for Avro fixed, size=4",
+      "keyAvro": "KGtleS1maXhlZC13cm9uZy1zaXpl",
+      "written": 0
+    },
+    {
+      "name": "fixed-from-slice",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"fixed\",\"name\":\"four\",\"size\":4}}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.fixed-from-slice.payload:1 (id: 187): could not marshal into avro: f: avro: []uint8 is unsupported for Avro fixed, size=4",
+      "keyAvro": "KGtleS1maXhlZC1mcm9tLXNsaWNl",
+      "written": 0
+    },
+    {
+      "name": "ts-millis-far-future",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-millis\"}}]}",
+      "payloadAvro": "/u/+ofqdcw==",
+      "keyAvro": "MGtleS10cy1taWxsaXMtZmFyLWZ1dHVyZQ==",
+      "decoded": "map{\"f\": time.Date(9999, time.December, 31, 23, 59, 59, 999000000, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-ts-millis-far-future\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"9999-12-31T23:59:59.999Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "ts-millis-year1",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-millis\"}}]}",
+      "payloadAvro": "/9/mouKgHA==",
+      "keyAvro": "JmtleS10cy1taWxsaXMteWVhcjE=",
+      "decoded": "map{\"f\": time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-ts-millis-year1\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"0001-01-01T00:00:00Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "ts-micros-far-future",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+      "payloadAvro": "/v+ax5mDooQH",
+      "keyAvro": "MGtleS10cy1taWNyb3MtZmFyLWZ1dHVyZQ==",
+      "decoded": "map{\"f\": time.Date(9999, time.December, 31, 23, 59, 59, 999999000, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-ts-micros-far-future\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"9999-12-31T23:59:59.999999Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "ts-micros-year1",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+      "payloadAvro": "///d8t//39wB",
+      "keyAvro": "JmtleS10cy1taWNyb3MteWVhcjE=",
+      "decoded": "map{\"f\": time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-ts-micros-year1\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"0001-01-01T00:00:00Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "ts-micros-maxlong-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+      "payloadAvro": "/v//////////AQ==",
+      "keyAvro": "MmtleS10cy1taWNyb3MtbWF4bG9uZy1yYXc=",
+      "decoded": "map{\"f\": time.Date(294247, time.January, 10, 4, 0, 54, 775807000, time.UTC)}",
+      "written": 0,
+      "writeError": "failed to prepare metadata with key={\"id\":\"key-ts-micros-maxlong-raw\"}: json: error calling MarshalJSON for type time.Time: Time.MarshalJSON: year outside of range [0,9999]"
+    },
+    {
+      "name": "ts-millis-maxlong-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-millis\"}}]}",
+      "payloadAvro": "/v//////////AQ==",
+      "keyAvro": "MmtleS10cy1taWxsaXMtbWF4bG9uZy1yYXc=",
+      "decoded": "map{\"f\": time.Date(292278994, time.August, 17, 7, 12, 55, 807000000, time.UTC)}",
+      "written": 0,
+      "writeError": "failed to prepare metadata with key={\"id\":\"key-ts-millis-maxlong-raw\"}: json: error calling MarshalJSON for type time.Time: Time.MarshalJSON: year outside of range [0,9999]"
+    },
+    {
+      "name": "ts-millis-nonutc",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-millis\"}}]}",
+      "payloadAvro": "gOaTvZhj",
+      "keyAvro": "KGtleS10cy1taWxsaXMtbm9udXRj",
+      "decoded": "map{\"f\": time.Date(2024, time.January, 1, 7, 0, 0, 0, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-ts-millis-nonutc\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2024-01-01T07:00:00Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "ts-nanos-truncated",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+      "payloadAvro": "gImYguL1hgY=",
+      "keyAvro": "LGtleS10cy1uYW5vcy10cnVuY2F0ZWQ=",
+      "decoded": "map{\"f\": time.Date(2024, time.January, 1, 0, 0, 0, 123456000, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-ts-nanos-truncated\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2024-01-01T00:00:00.123456Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "date-pre-epoch",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"int\",\"logicalType\":\"date\"}}]}",
+      "payloadAvro": "vY8D",
+      "keyAvro": "JGtleS1kYXRlLXByZS1lcG9jaA==",
+      "decoded": "map{\"f\": time.Date(1900, time.January, 1, 0, 0, 0, 0, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-date-pre-epoch\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"1900-01-01T00:00:00Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "date-with-time",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"int\",\"logicalType\":\"date\"}}]}",
+      "payloadAvro": "lrQC",
+      "keyAvro": "JGtleS1kYXRlLXdpdGgtdGltZQ==",
+      "decoded": "map{\"f\": time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-date-with-time\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2024-01-01T00:00:00Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "time-millis-over-24h-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"int\",\"logicalType\":\"time-millis\"}}]}",
+      "payloadAvro": "gNykUg==",
+      "keyAvro": "OGtleS10aW1lLW1pbGxpcy1vdmVyLTI0aC1yYXc=",
+      "decoded": "map{\"f\": 86284032000000}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-time-millis-over-24h-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":86284032000000},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "ts-from-int64",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-millis\"}}]}",
+      "payloadAvro": "gKCr/vli",
+      "keyAvro": "ImtleS10cy1mcm9tLWludDY0",
+      "decoded": "map{\"f\": time.Date(2023, time.November, 14, 22, 13, 20, 0, time.UTC)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-ts-from-int64\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"2023-11-14T22:13:20Z\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "decimal-highprec",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":38,\"scale\":10}}]}",
+      "payloadAvro": "GgGO6Q/2w3Pg7gwE1RU=",
+      "keyAvro": "KGtleS1kZWNpbWFsLWhpZ2hwcmVj",
+      "decoded": "map{\"f\": *big.Rat(123456789012345678900123456789/10000000000)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-decimal-highprec\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"123456789012345678900123456789/10000000000\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "decimal-rounding",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":10,\"scale\":2}}]}",
+      "payloadAvro": "AiE=",
+      "keyAvro": "KGtleS1kZWNpbWFsLXJvdW5kaW5n",
+      "decoded": "map{\"f\": *big.Rat(33/100)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-decimal-rounding\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"33/100\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "decimal-fixed-neg",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"fixed\",\"name\":\"dec\",\"size\":4,\"logicalType\":\"decimal\",\"precision\":8,\"scale\":2}}]}",
+      "payloadAvro": "/////w==",
+      "keyAvro": "KmtleS1kZWNpbWFsLWZpeGVkLW5lZw==",
+      "decoded": "map{\"f\": *big.Rat(-1/100)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-decimal-fixed-neg\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"-1/100\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "decimal-from-float",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":10,\"scale\":2}}]}",
+      "payloadAvro": "",
+      "encodeError": "failed to marshal data with schema equivalence.decimal-from-float.payload:1 (id: 219): could not marshal into avro: f: avro: float64 is unsupported for Avro bytes",
+      "keyAvro": "LGtleS1kZWNpbWFsLWZyb20tZmxvYXQ=",
+      "written": 0
+    },
+    {
+      "name": "decimal-zero-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":10,\"scale\":2}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "KGtleS1kZWNpbWFsLXplcm8tcmF3",
+      "decoded": "map{\"f\": *big.Rat(0)}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-decimal-zero-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"0\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "uuid-invalid",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"string\",\"logicalType\":\"uuid\"}}]}",
+      "payloadAvro": "CG5vcGU=",
+      "keyAvro": "IGtleS11dWlkLWludmFsaWQ=",
+      "decoded": "map{\"f\": \"nope\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-uuid-invalid\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"nope\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "empty-record",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[]}",
+      "payloadAvro": "",
+      "keyAvro": "IGtleS1lbXB0eS1yZWNvcmQ=",
+      "decoded": "map{}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-empty-record\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "nested-null-in-record",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":[\"null\",\"int\"]}]}}]}",
+      "payloadAvro": "AA==",
+      "keyAvro": "MmtleS1uZXN0ZWQtbnVsbC1pbi1yZWNvcmQ=",
+      "decoded": "map{\"f\": map{\"a\": \u003cnil\u003e}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-nested-null-in-record\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"a\":null}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "truncated-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "EGE=",
+      "keyAvro": "ImtleS10cnVuY2F0ZWQtcmF3",
+      "decodeError": "failed to unmarshal data with schema equivalence.truncated-raw.payload:1 (id: 229): could not unmarshal from avro: opencdc.StructuredData: unexpected EOF",
+      "written": 0,
+      "writeError": "record 0: failed to decode payload.after: failed to unmarshal bytes with schema: failed to unmarshal data with schema equivalence.truncated-raw.payload:1 (id: 229): could not unmarshal from avro: opencdc.StructuredData: unexpected EOF"
+    },
+    {
+      "name": "empty-bytes-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "",
+      "keyAvro": "JmtleS1lbXB0eS1ieXRlcy1yYXc=",
+      "decoded": "map{\"f\": \u003cnil\u003e}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-empty-bytes-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "trailing-garbage-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"int\"}]}",
+      "payloadAvro": "Av//",
+      "keyAvro": "MGtleS10cmFpbGluZy1nYXJiYWdlLXJhdw==",
+      "decoded": "map{\"f\": 1}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-trailing-garbage-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":1},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "bad-union-index-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":[\"null\",\"string\"]}]}",
+      "payloadAvro": "Bg==",
+      "keyAvro": "LmtleS1iYWQtdW5pb24taW5kZXgtcmF3",
+      "decodeError": "failed to unmarshal data with schema equivalence.bad-union-index-raw.payload:1 (id: 235): could not unmarshal from avro: opencdc.StructuredData: avro: decode union type: unknown union type",
+      "written": 0,
+      "writeError": "record 0: failed to decode payload.after: failed to unmarshal bytes with schema: failed to unmarshal data with schema equivalence.bad-union-index-raw.payload:1 (id: 235): could not unmarshal from avro: opencdc.StructuredData: avro: decode union type: unknown union type"
+    },
+    {
+      "name": "huge-array-count-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"array\",\"items\":\"int\"}}]}",
+      "payloadAvro": "gIl6",
+      "keyAvro": "MGtleS1odWdlLWFycmF5LWNvdW50LXJhdw==",
+      "decoded": "map{\"f\": \u003cnil\u003e}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-huge-array-count-raw\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "negative-bytes-len-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"bytes\"}]}",
+      "payloadAvro": "Aw==",
+      "keyAvro": "NGtleS1uZWdhdGl2ZS1ieXRlcy1sZW4tcmF3",
+      "decodeError": "failed to unmarshal data with schema equivalence.negative-bytes-len-raw.payload:1 (id: 239): could not unmarshal from avro: opencdc.StructuredData: avro: ReadBYTES: invalid bytes length",
+      "written": 0,
+      "writeError": "record 0: failed to decode payload.after: failed to unmarshal bytes with schema: failed to unmarshal data with schema equivalence.negative-bytes-len-raw.payload:1 (id: 239): could not unmarshal from avro: opencdc.StructuredData: avro: ReadBYTES: invalid bytes length"
+    },
+    {
+      "name": "negative-string-len-raw",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+      "payloadAvro": "Aw==",
+      "keyAvro": "NmtleS1uZWdhdGl2ZS1zdHJpbmctbGVuLXJhdw==",
+      "decodeError": "failed to unmarshal data with schema equivalence.negative-string-len-raw.payload:1 (id: 241): could not unmarshal from avro: opencdc.StructuredData: avro: ReadSTRING: invalid string length",
+      "written": 0,
+      "writeError": "record 0: failed to decode payload.after: failed to unmarshal bytes with schema: failed to unmarshal data with schema equivalence.negative-string-len-raw.payload:1 (id: 241): could not unmarshal from avro: opencdc.StructuredData: avro: ReadSTRING: invalid string length"
+    },
+    {
+      "name": "field-default-missing",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"},{\"name\":\"g\",\"type\":\"int\",\"default\":7}]}",
+      "payloadAvro": "AngO",
+      "keyAvro": "MmtleS1maWVsZC1kZWZhdWx0LW1pc3Npbmc=",
+      "decoded": "map{\"f\": \"x\", \"g\": 7}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-field-default-missing\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"x\",\"g\":7},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "nullable-default-missing",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"},{\"name\":\"g\",\"type\":[\"null\",\"int\"],\"default\":null}]}",
+      "payloadAvro": "AngA",
+      "keyAvro": "OGtleS1udWxsYWJsZS1kZWZhdWx0LW1pc3Npbmc=",
+      "decoded": "map{\"f\": \"x\", \"g\": \u003cnil\u003e}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-nullable-default-missing\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":\"x\",\"g\":null},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "named-ref",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"a\",\"type\":{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"x\",\"type\":\"int\"}]}},{\"name\":\"b\",\"type\":\"inner\"}]}",
+      "payloadAvro": "AgQ=",
+      "keyAvro": "GmtleS1uYW1lZC1yZWY=",
+      "decoded": "map{\"a\": map{\"x\": 1}, \"b\": map{\"x\": 2}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-named-ref\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"a\":{\"x\":1},\"b\":{\"x\":2}},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "namespaced",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"namespace\":\"com.ex\",\"fields\":[{\"name\":\"e\",\"type\":{\"type\":\"enum\",\"name\":\"E\",\"symbols\":[\"A\",\"B\"]}}]}",
+      "payloadAvro": "Ag==",
+      "keyAvro": "HGtleS1uYW1lc3BhY2Vk",
+      "decoded": "map{\"e\": \"B\"}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-namespaced\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"e\":\"B\"},\"doc_as_upsert\":true}\n",
+      "written": 1
+    },
+    {
+      "name": "structured-nested-sd",
+      "schema": "{\"type\":\"record\",\"name\":\"payload\",\"fields\":[{\"name\":\"f\",\"type\":{\"type\":\"record\",\"name\":\"inner\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}}]}",
+      "payloadAvro": "Ag==",
+      "keyAvro": "MGtleS1zdHJ1Y3R1cmVkLW5lc3RlZC1zZA==",
+      "decoded": "map{\"f\": map{\"a\": 1}}",
+      "bulk": "{\"update\":{\"_id\":\"{\\\"id\\\":\\\"key-structured-nested-sd\\\"}\",\"_index\":\"idx\",\"retry_on_conflict\":3}}\n{\"doc\":{\"f\":{\"a\":1}},\"doc_as_upsert\":true}\n",
+      "written": 1
     },
     {
       "name": "every-type",

@@ -51,7 +51,7 @@ The destination is at-least-once. A batch is sent as one bulk request, and a rec
 
 When a record carries a key or payload schema (`opencdc.key.schema.*` / `opencdc.payload.schema.*` metadata), the SDK decodes it before the write (`sdk.schema.extract.key.enabled` and `sdk.schema.extract.payload.enabled`, both `true` by default) and the document is built from the decoded value. Decoding uses `github.com/iskorotkov/avro/v2` through conduit-commons; earlier releases used the archived `github.com/hamba/avro/v2`.
 
-- An empty Avro array is written as `[]`. Releases up to v0.4.1 wrote it as `null`, which could not be told apart from the `null` branch of a `["null", array]` union.
+- Every empty Avro array, at any depth (a field, inside a record, a union, a map value or another array), is written as `[]`. Releases up to v0.4.1 wrote it as `null`, which could not be told apart from the `null` branch of a `["null", array]` union.
 - Avro decimals are written as a fraction string (for example `"-15432/125"`), unchanged from earlier releases.
 
 # Source
