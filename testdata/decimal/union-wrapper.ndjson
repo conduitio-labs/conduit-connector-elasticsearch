@@ -1,0 +1,2 @@
+{"update":{"_id":"k1","_index":"idx","retry_on_conflict":3}}
+{"doc":{"md":{"bytes.decimal":"1.50"},"rr":{"b":{"x":"1.500"}},"sd":"1.500"},"doc_as_upsert":true}

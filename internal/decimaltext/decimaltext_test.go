@@ -193,20 +193,6 @@ func TestRender(t *testing.T) {
 			want:   opencdc.StructuredData{"a": []any{map[string]any{"k": map[string]any{"d": "0.500"}}}},
 		},
 		{
-			name: "union of two records picks the one whose fields match",
-			schema: `{"type":"record","name":"p","fields":[{"name":"u","type":["null",` +
-				`{"type":"record","name":"a","fields":[{"name":"x","type":` + dec2 + `}]},` +
-				`{"type":"record","name":"b","fields":[{"name":"x","type":` + fx3 + `},{"name":"y","type":"int"}]}]}]}`,
-			in:   opencdc.StructuredData{"u": map[string]any{"x": rat("1"), "y": 1}},
-			want: opencdc.StructuredData{"u": map[string]any{"x": "1.000", "y": 1}},
-		},
-		{
-			name:   "union of decimals with different scales falls back to fewest digits",
-			schema: `{"type":"record","name":"p","fields":[{"name":"f","type":["null",` + dec2 + `,` + fx3 + `]}]}`,
-			in:     opencdc.StructuredData{"f": rat("3/2")},
-			want:   opencdc.StructuredData{"f": "1.5"},
-		},
-		{
 			name:   "value that does not fit the scale keeps exact digits",
 			schema: `{"type":"record","name":"p","fields":[{"name":"f","type":` + dec2 + `}]}`,
 			in:     opencdc.StructuredData{"f": rat("1/8")},

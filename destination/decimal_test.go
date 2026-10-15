@@ -128,8 +128,10 @@ func TestWrite_DecimalSchemaLookupFailureIsNotWritten(t *testing.T) {
 	r.Metadata.SetPayloadSchemaVersion(1)
 
 	// Without the schema the scale is unknown; writing "1.5" for a field that
-	// is "1.50" everywhere else would make the output depend on a transient
-	// error, so the batch fails and is retried instead.
+	// is "1.50" everywhere else would make the output depend on the schema
+	// service, so the batch fails with nothing written. The SDK does not retry
+	// Write: the nack stops the pipeline (default DLQ) or sends the batch to
+	// the DLQ (nack threshold above 0).
 	n, err := d.Write(context.Background(), []opencdc.Record{r})
 	require.Error(t, err)
 	require.Equal(t, 0, n)
@@ -161,4 +163,36 @@ func TestWrite_DecimalUsesSchemaScale(t *testing.T) {
 	require.Len(t, bodies, 2)
 	require.Contains(t, bodies[0], `{"doc":{"f":"1.5000"},"doc_as_upsert":true}`)
 	require.Equal(t, bodies[0], bodies[1])
+}
+
+func TestWrite_DecimalSchemaThatDoesNotParseAloneIsPermanent(t *testing.T) {
+	ctx := context.Background()
+	var bodies []string
+	c := bulkRecorder(t, &bodies)
+	d := decimalDestination(c)
+
+	// Another schema in the process defines the named fixed. commons parses
+	// with the codec's package-level cache, so a schema that only refers to it
+	// is accepted there; parsed on its own it does not resolve.
+	_, err := schema.Create(ctx, schema.TypeAvro, "decimal-test.defines-fx",
+		[]byte(`{"type":"record","name":"d","fields":[{"name":"f","type":{"type":"fixed","name":"leakfx","size":8,"logicalType":"decimal","precision":10,"scale":2}}]}`))
+	require.NoError(t, err)
+	sch, err := schema.Create(ctx, schema.TypeAvro, "decimal-test.refers-fx",
+		[]byte(`{"type":"record","name":"p","fields":[{"name":"f","type":"leakfx"}]}`))
+	require.NoError(t, err)
+
+	r := opencdc.Record{
+		Operation: opencdc.OperationUpdate, Key: opencdc.RawData("k1"),
+		Metadata: opencdc.Metadata{},
+		Payload:  opencdc.Change{After: opencdc.StructuredData{"f": big.NewRat(3, 2)}},
+	}
+	r.Metadata.SetPayloadSchemaSubject(sch.Subject)
+	r.Metadata.SetPayloadSchemaVersion(sch.Version)
+
+	for range 2 { // permanent: the same on every attempt
+		n, err := d.Write(ctx, []opencdc.Record{r})
+		require.ErrorContains(t, err, "permanent")
+		require.Equal(t, 0, n)
+	}
+	require.Empty(t, c.BulkCalls())
 }

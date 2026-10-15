@@ -89,7 +89,7 @@ func (d *Destination) payloadSchema(ctx context.Context, rec opencdc.Record) (av
 	// middleware has just fetched.
 	sch, err := schema.Get(ctx, subject, version)
 	if err != nil {
-		return nil, fmt.Errorf("get payload schema %s:%d: %w", subject, version, err)
+		return nil, fmt.Errorf("get payload schema %s:%d to read decimal scales: %w", subject, version, err)
 	}
 	if sch.Type != schema.TypeAvro {
 		return nil, nil //nolint:nilnil // only Avro schemas carry decimal scales
@@ -123,9 +123,15 @@ func (p *parsedSchemas) parse(sch schema.Schema) (avro.Schema, error) {
 	}
 	// A private cache: the package-level default would let two schemas that
 	// declare the same named type with different definitions share one.
+	// conduit-commons parses with that default, so the middleware can decode
+	// with a schema that refers to a named type only another schema defines;
+	// such a schema fails here, on every attempt.
 	parsed, err := avro.ParseBytesWithCache(sch.Bytes, "", &avro.SchemaCache{})
 	if err != nil {
-		return nil, fmt.Errorf("parse payload schema %s:%d: %w", sch.Subject, sch.Version, err)
+		return nil, fmt.Errorf(
+			"parse payload schema %s:%d on its own to read decimal scales (permanent: "+
+				"this record fails until the schema is self-contained): %w",
+			sch.Subject, sch.Version, err)
 	}
 	if p.m == nil || len(p.m) >= maxParsedSchemas {
 		p.m = make(map[parsedSchemaKey]parsedSchema)

@@ -120,6 +120,23 @@ func TestDecimalBulkGolden(t *testing.T) {
 			schema: rec(field("f", dec2)), value: map[string]any{"f": rat("1.5")},
 			keySchema: rec(field("id", dec2)), key: map[string]any{"id": rat("1.5")},
 		}},
+		// Multi-branch unions with a named or complex branch decode wrapped
+		// as {"<branch full name>": value}; each decimal gets its own
+		// branch's scale. The wrapper itself still reaches Elasticsearch as
+		// an object, a shape bug older than #171 (#173).
+		"union-wrapper": {{
+			schema: rec(
+				field("md", `["null",{"type":"map","values":{"type":"bytes","logicalType":"decimal","precision":10,"scale":6}},`+dec2+`]`),
+				field("rr", `["null",{"type":"record","name":"a","namespace":"ns","fields":[{"name":"x","type":`+dec2+`}]},{"type":"record","name":"b","fields":[{"name":"x","type":`+dec3+`}]}]`),
+				field("sd", `["null","string",`+dec3+`]`),
+			),
+			value: map[string]any{
+				"md": map[string]any{"bytes.decimal": rat("1.5")},
+				"rr": map[string]any{"b": map[string]any{"x": rat("1.5")}},
+				"sd": map[string]any{"bytes.decimal": rat("1.5")},
+			},
+			rawKey: "k1",
+		}},
 		"batch-mixed": {
 			{schema: rec(field("f", dec2)), value: map[string]any{"f": rat("1.5")}, rawKey: "k1"},
 			{schema: rec(field("g", `"double"`)), value: map[string]any{"g": 1.5}, rawKey: "k2"},

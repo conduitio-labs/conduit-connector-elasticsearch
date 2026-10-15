@@ -7,7 +7,7 @@ Issue: #171. Lane: ConduitIO/conduit#3007 (v0.21: Elasticsearch/OpenSearch). Ris
 With `sdk.schema.extract.payload.enabled` (the default), the SDK middleware decodes an Avro payload before `Write`. conduit-commons decodes an Avro `decimal` (`bytes` or `fixed`) into a `*big.Rat`. `preparePayload` marshals the structured payload with `encoding/json`, which writes a `*big.Rat` as its ratio. So `-123.456` reaches Elasticsearch as `"-15432/125"`.
 
 - With dynamic mapping, the ratio is indexed as text. It reads like corruption, and range queries and aggregations cannot use it (invariant 6).
-- With a numeric mapping (`scaled_float`, `double`), Elasticsearch rejects the item (`document_parsing_exception`). The record is nacked, so no data is lost, but the pipeline cannot make progress on that data.
+- With a numeric mapping (`scaled_float`, `double`), Elasticsearch rejects the item (`document_parsing_exception`). The record is nacked, so no data is lost: with the default DLQ settings the pipeline stops, and with a nack threshold above 0 the batch tail goes to the DLQ.
 
 The `*big.Rat` is normalised and has lost the scale: `1.50` at scale 2 decodes to `3/2`.
 
@@ -17,17 +17,17 @@ The `*big.Rat` is normalised and has lost the scale: `1.50` at scale 2 decodes t
 - Deterministic. A field's text must not depend on the batch, on map order, or on a transient error.
 - No change to document IDs. `Key.Bytes()` is the `_id` (for a structured key, its JSON), and changing it would split existing documents.
 - No change to the SDK, conduit-commons or the connector protocol in this fix.
-- The decoded value is the codec's shape: records and maps as `map[string]any`, arrays as `[]any`, union values unwrapped to the branch value.
+- The decoded value is the codec's shape: records and maps as `map[string]any`, arrays as `[]any`. A union value is either unwrapped to the branch value (commons unwraps `["null", X]` record fields, and primitive branches come back plain), or wrapped as `{"<branch full name>": value}`, which the codec keeps for named and complex branches of other unions (`{"bytes.decimal": v}` in `["null", map, decimal]`, `{"ns.a": {...}}` in a union of two records). The wrapper reaching Elasticsearch as an object is a separate, older shape bug (#173); this fix keeps the shape.
 
 ## Decision
 
 Before building the bulk request, `Write` replaces every `*big.Rat` in `Payload.After` with a string of exact decimal text, padded to the scale the Avro schema declares (`"1.50"`, `"-123.456"`, `"100"` at scale 0).
 
 - The scale comes from the payload schema named in the record metadata (`opencdc.payload.schema.subject`/`version`). This is the same lookup the middleware made a moment earlier, and the SDK caches it. The schema text is parsed with `github.com/iskorotkov/avro/v2` (already in the module graph through commons, now a direct dependency) with a private schema cache, and memoised per subject:version.
-- The value and the schema are walked together: record fields, array items, map values, unions (nullable, multi-branch, the one array or map branch, the record branch whose field names match the decoded keys), and named references (a decimal `fixed` declared once and referenced by name).
-- When no scale can be read (no payload schema, or a union with two decimal branches of different scales), the text has the fewest exact digits (`"1.5"`). It is still exact.
+- The value and the schema are walked together: record fields, array items, map values, named references (a decimal `fixed` declared once and referenced by name), and unions. For a union, a one-key map whose key is a branch's full name is a wrapper and selects that branch by name. An unwrapped value uses the only branch of its shape (the array branch, the single record or map branch); with two record branches it gets no schema.
+- When no scale can be read (no payload schema, or an unwrapped union value with two decimal branches of different scales), the text has the fewest exact digits (`"1.5"`). It is still exact.
 - A `*big.Rat` with no finite decimal expansion is an error. The batch is not sent and nothing is acked. An Avro decimal is always unscaled/10^scale, so this does not happen for decoded Avro.
-- A failed schema lookup fails the batch, rather than silently writing a different number of digits.
+- A failed schema lookup, or a schema that does not parse on its own, fails the batch, rather than silently writing a different number of digits.
 - Only `Payload.After` is rewritten. The key is left as it is.
 - Records with no `*big.Rat` cost one walk and no allocation. Records with one get new maps and slices along the path to it. The caller's records are never mutated.
 
@@ -44,13 +44,15 @@ The code is in `internal/decimaltext` (formatting and the walk) and `destination
 
 | Failure | Effect | Handling |
 | --- | --- | --- |
-| Schema lookup fails (schema service unavailable) | Scale unknown | Batch fails with `0` written, the SDK nacks it and the pipeline retries. Nothing is written with a different scale. |
+| Schema lookup fails (schema service unavailable) | Scale unknown | Batch fails with `0` written and is nacked. The SDK does not retry `Write`: with the default DLQ settings the pipeline stops and recovery redelivers the records; with `dlq.window-nack-threshold` above 0 the whole batch goes to the DLQ. Nothing is written with a different scale. |
 | Record has a decimal but no payload schema metadata | Scale unknown | Fewest exact digits. This only happens in-process: over gRPC a `*big.Rat` exists only after the middleware decoded with a schema. |
-| Schema text does not parse | No scale | Batch fails. The middleware parsed the same text, so this should not happen. |
+| Schema does not parse on its own | No scale | **Permanent**: the batch fails the same way on every attempt, and the error says so. This can happen even though the middleware decoded with it: conduit-commons parses with the codec's package-level `DefaultSchemaCache`, so a schema that refers to a named type only another schema defines resolves there, but not in the private cache used here. Failing closed is deliberate; the cross-schema leak belongs to commons (`TestWrite_DecimalSchemaThatDoesNotParseAloneIsPermanent`). |
 | Value does not fit the schema's scale (wrong schema) | Padding would round | Fewest exact digits, never rounding. |
 | `*big.Rat` with a non-terminating expansion | No exact text | Batch fails (`ErrNotExact`), the error names the record index and field path. |
-| Union with decimal branches of different scales | Branch unknown after decoding | Fewest exact digits. |
-| Union of records with identical field names | Branch unknown | Entries get no schema, so decimals in them get the fewest digits. |
+| Wrapped union value | Branch named by the wrapper key | That branch's scale. Shape kept (#173). |
+| Unwrapped union value with decimal branches of different scales | Branch unknown | Fewest exact digits. |
+| Unwrapped value of a union with two record branches | Branch unknown | No schema for its entries, so fewest exact digits. |
+| Unwrapped map or single-field record whose only key equals a branch name | Read as a wrapper | At most the padding is lost (fewest exact digits), except a map whose key is literally a decimal branch name such as `bytes.decimal`, which gets that branch's scale. Not produced by the codec in the shapes tested. |
 | A shape the walk does not know (a container type other than `map[string]any`/`[]any`) | `*big.Rat` would reach `encoding/json` | The codec does not produce one. The golden bulk tests and the round-trip property test fail if it starts to. |
 | Huge scale in a hostile schema | Long string | The text has scale digits. The decoder has already materialised 10^scale, so no new amplification. |
 | Memo growth | Memory | Bounded at 64 schemas, then reset. |
@@ -66,11 +68,11 @@ Ack path (invariant 1): unchanged. Every new failure returns before the bulk req
 
 ## Observability
 
-No new metrics. A failure surfaces as the `Write` error the SDK already logs and nacks with: record index, field path, and the value as a ratio. For an operator, the visible signal of the fix is the end of `document_parsing_exception` on numeric decimal fields.
+No new metrics. A failure surfaces as the `Write` error the SDK already logs and nacks with: record index, field path, and the value as a ratio. A schema that does not parse on its own is reported as permanent. For an operator, the visible signal of the fix is the end of `document_parsing_exception` on numeric decimal fields.
 
 ## Tests
 
-- `internal/decimaltext`: table tests for formatting, the walk (every location, references, unions, fallbacks) and non-mutation. A seeded property test over random precision (1 to 76) and scale (0 to precision) through the real codec, checking the text against an independent printer and checking that it parses back exactly. `FuzzFormat`.
+- `internal/decimaltext`: table tests for formatting, the walk (every location, references, fallbacks) and non-mutation, and `TestRender_CodecUnions`, which renders real codec output for wrapped and unwrapped unions. A seeded property test over random precision (1 to 76) and scale (0 to precision) through the real codec, checking the text against an independent printer and checking that it parses back exactly. `FuzzFormat`.
 - `TestDecimalBulkGolden`: bulk bodies through the real destination with the middleware, in `testdata/decimal/*.ndjson`.
 - `TestAvroEquivalence`: the four frozen decimal cases now pin both the old ratio and the new text (`decimalChange`).
 - `test/v8`: `TestWrite_AvroDecimalsAreExactText` against a real Elasticsearch 8, with keyword, `scaled_float`, `double` and dynamic mappings.

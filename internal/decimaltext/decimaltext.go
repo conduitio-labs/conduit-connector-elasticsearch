@@ -34,7 +34,13 @@
 //
 // Render walks the shapes the conduit-commons Avro decoder produces: records
 // and maps as map[string]any (opencdc.StructuredData at the top), arrays as
-// []any, and union values unwrapped to the branch value.
+// []any. A union value comes in one of two shapes: unwrapped to the branch
+// value (commons unwraps ["null", X] record fields, and the codec unwraps
+// primitive branches), or wrapped as {"<branch full name>": value}, which the
+// codec keeps for named and complex branches of other unions, for example
+// {"bytes.decimal": 1.5} in ["null", map, decimal] or {"ns.rec": {...}}.
+// A wrapper selects its branch by name and keeps its shape; Render does not
+// unwrap it (see #173).
 package decimaltext
 
 import (
@@ -140,6 +146,9 @@ func Render(v any, sch avro.Schema) (any, error) {
 
 func render(v any, sch avro.Schema, path string) (any, error) {
 	sch = deref(sch)
+	if u, ok := sch.(*avro.UnionSchema); ok {
+		return renderUnion(v, u, path)
+	}
 	switch v := v.(type) {
 	case *big.Rat:
 		return renderRat(v, sch, path)
@@ -167,11 +176,94 @@ func render(v any, sch avro.Schema, path string) (any, error) {
 	}
 }
 
+// renderUnion renders v, decoded with the union u, in either shape (see the
+// package doc). A one-key map whose key is the full name of a branch is read
+// as a wrapper and rendered with that branch. An unwrapped value is rendered
+// with the only branch of its shape, or without a schema when there are two
+// (two record branches), so its decimals get the fewest exact digits.
+//
+// The wrapper reading wins over an unwrapped map or single-field record whose
+// only key happens to equal a branch name ("map", "null", a record's full
+// name). That costs at most the padding (fewest exact digits), except for a
+// map whose key is literally a decimal branch name such as "bytes.decimal",
+// which would get that branch's scale.
+func renderUnion(v any, u *avro.UnionSchema, path string) (any, error) {
+	if !Contains(v) {
+		return v, nil
+	}
+	if w, ok := v.(map[string]any); ok && len(w) == 1 {
+		for name, inner := range w {
+			branch := branchNamed(u, name)
+			if branch == nil {
+				break
+			}
+			r, err := render(inner, branch, path)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]any{name: r}, nil
+		}
+	}
+	switch v := v.(type) {
+	case *big.Rat:
+		return renderRat(v, u, path)
+	case map[string]any:
+		return renderMap(v, onlyBranch(u, avro.Record, avro.Map), path)
+	case []any:
+		return render(v, onlyBranch(u, avro.Array), path)
+	default:
+		return v, nil
+	}
+}
+
+// branchName is the name the codec gives a union branch in a wrapper: the
+// full name of a named type, otherwise the type, with ".<logicalType>" for a
+// primitive with a logical type ("bytes.decimal", "map", "ns.money").
+func branchName(sch avro.Schema) string {
+	sch = deref(sch)
+	if n, ok := sch.(avro.NamedSchema); ok {
+		return n.FullName()
+	}
+	name := string(sch.Type())
+	if p, ok := sch.(*avro.PrimitiveSchema); ok && p.Logical() != nil {
+		name += "." + string(p.Logical().Type())
+	}
+	return name
+}
+
+func branchNamed(u *avro.UnionSchema, name string) avro.Schema {
+	for _, b := range u.Types() {
+		if branchName(b) == name {
+			return deref(b)
+		}
+	}
+	return nil
+}
+
+// onlyBranch returns the single branch of u with one of the given types, or
+// nil when there is none or more than one: an unwrapped value does not say
+// which of two record branches it came from.
+func onlyBranch(u *avro.UnionSchema, types ...avro.Type) avro.Schema {
+	var found avro.Schema
+	for _, b := range u.Types() {
+		b = deref(b)
+		for _, t := range types {
+			if b.Type() == t {
+				if found != nil {
+					return nil
+				}
+				found = b
+			}
+		}
+	}
+	return found
+}
+
 func renderMap(v map[string]any, sch avro.Schema, path string) (map[string]any, error) {
 	if !Contains(v) {
 		return v, nil
 	}
-	childOf := mapChildren(v, sch)
+	childOf := mapChildren(sch)
 	out := make(map[string]any, len(v))
 	for k, item := range v {
 		p := k
@@ -249,45 +341,17 @@ func logicalScale(l avro.LogicalSchema) (int, bool) {
 	return d.Scale(), true
 }
 
-// arrayItems returns the item schema of an array schema, or of the array
-// branch of a union (Avro allows at most one), or nil.
+// arrayItems returns the item schema of an array schema, or nil.
 func arrayItems(sch avro.Schema) avro.Schema {
-	switch s := sch.(type) {
-	case *avro.ArraySchema:
-		return s.Items()
-	case *avro.UnionSchema:
-		for _, branch := range s.Types() {
-			if a, ok := deref(branch).(*avro.ArraySchema); ok {
-				return a.Items()
-			}
-		}
+	if a, ok := sch.(*avro.ArraySchema); ok {
+		return a.Items()
 	}
 	return nil
 }
 
-// mapChildren returns a function giving the schema of each entry of v, which
-// was decoded with sch: the field type for a record, the value type for a map.
-// For a union it picks the one record branch whose field names are exactly the
-// keys of v (the decoder writes every field) or the map branch; when that
-// leaves more or fewer than one candidate, entries get no schema.
-func mapChildren(v map[string]any, sch avro.Schema) func(string) avro.Schema {
-	if u, ok := sch.(*avro.UnionSchema); ok {
-		var candidates []avro.Schema
-		for _, branch := range u.Types() {
-			switch b := deref(branch).(type) {
-			case *avro.MapSchema:
-				candidates = append(candidates, b)
-			case *avro.RecordSchema:
-				if sameKeys(b, v) {
-					candidates = append(candidates, b)
-				}
-			}
-		}
-		sch = nil
-		if len(candidates) == 1 {
-			sch = candidates[0]
-		}
-	}
+// mapChildren returns a function giving the schema of each entry of a map
+// decoded with sch: the field type for a record, the value type for a map.
+func mapChildren(sch avro.Schema) func(string) avro.Schema {
 	switch s := sch.(type) {
 	case *avro.RecordSchema:
 		fields := make(map[string]avro.Schema, len(s.Fields()))
@@ -301,16 +365,4 @@ func mapChildren(v map[string]any, sch avro.Schema) func(string) avro.Schema {
 	default:
 		return func(string) avro.Schema { return nil }
 	}
-}
-
-func sameKeys(r *avro.RecordSchema, v map[string]any) bool {
-	if len(r.Fields()) != len(v) {
-		return false
-	}
-	for _, f := range r.Fields() {
-		if _, ok := v[f.Name()]; !ok {
-			return false
-		}
-	}
-	return true
 }
