@@ -52,7 +52,36 @@ The destination is at-least-once. A batch is sent as one bulk request, and a rec
 When a record carries a key or payload schema (`opencdc.key.schema.*` / `opencdc.payload.schema.*` metadata), the SDK decodes it before the write (`sdk.schema.extract.key.enabled` and `sdk.schema.extract.payload.enabled`, both `true` by default) and the document is built from the decoded value. Decoding uses `github.com/iskorotkov/avro/v2` through conduit-commons; earlier releases used the archived `github.com/hamba/avro/v2`.
 
 - Every empty Avro array, at any depth (a field, inside a record, a union, a map value or another array), is written as `[]`. Releases up to v0.4.1 wrote it as `null`, which could not be told apart from the `null` branch of a `["null", array]` union.
-- Avro decimals are written as a fraction string (for example `"-15432/125"`), unchanged from earlier releases.
+- Avro decimals (`bytes` or `fixed` with `logicalType: decimal`) are written as a JSON string of exact decimal text, with as many fractional digits as the schema's scale: `"-123.456"` at scale 3, `"1.50"` at scale 2, `"100"` at scale 0. This applies wherever the decimal sits: a top-level field, a nested record, an array, a map or a union. Some union values are still wrapped as `{"<branch>": value}` when they reach the connector (a union with a record, enum, fixed, map or array branch, outside the positions where conduit-commons unwraps them). The decimal inside gets that branch's scale, and the wrapper still reaches Elasticsearch as an object (#173). Map keys are data: a key that happens to equal a type name is never read as a wrapper. Releases up to v0.4.1 wrote the ratio of the decoded value instead (`"-15432/125"`, #171); see [Upgrading](#upgrading-avro-decimals).
+  - A decimal is never written as a JSON number. Elasticsearch maps a JSON number it has not seen before as `float`, which keeps about 7 significant digits.
+  - When the scale cannot be read (the record has no payload schema, or a union value no longer says which of two branches it came from), the text has the fewest digits that represent the value exactly (`"1.5"`).
+  - When a record carries a decimal and its payload schema cannot be fetched, or does not parse on its own (it refers to a named type that only another schema defines), the write fails: the batch is not sent and no record in it is acknowledged. The SDK does not retry the write. With the default DLQ settings the pipeline stops, and records are redelivered when it is restarted; with `dlq.window-nack-threshold` above 0 the whole batch goes to the DLQ. A schema that does not parse on its own fails every time until it is fixed.
+  - A decimal that has no exact decimal text fails the write the same way. A decoded Avro decimal always has exact text.
+  - The record key is not changed. It becomes the document ID, so a decimal key is still printed as before (`{"id":"3/2"}`). Changing it would move existing documents to new IDs.
+
+### Mapping decimal fields
+
+The string goes into whatever mapping the index has. Choose it by what the field is used for:
+
+| Mapping | What you get | Precision |
+| --- | --- | --- |
+| `keyword` | Exact text in `_source` and in the index. Term queries match the scale-padded text (`"1.50"`, not `"1.5"`). Range queries compare as strings. | Exact |
+| `scaled_float` with `scaling_factor` = 10^scale | Numeric range queries, sorting and aggregations. Elasticsearch coerces the string to a number. | Stored as a long. Exact only while the value parses as a double without rounding, about 15 significant digits. |
+| `double` | Numeric queries | About 15-17 significant digits |
+| none (dynamic mapping) | `text` with a `keyword` subfield (`<field>.keyword`), because the value is a string. Numeric detection is off by default. | Exact in `_source` and `.keyword` |
+
+`_source` always holds the exact string, whatever the mapping. To query a decimal both exactly and numerically, map it with `keyword` and add a `scaled_float` multi-field.
+
+Index templates and dynamic templates see the rendered value: a JSON string such as `"1.50"`, so a dynamic template with `match_mapping_type: string` applies to decimal fields.
+
+### Upgrading: Avro decimals
+
+Documents written by earlier releases hold the ratio string (`"-15432/125"`). New writes and updates hold decimal text (`"-123.456"`). An upsert replaces the field, so a document becomes consistent once its record is written again.
+
+- An index with dynamic mapping keeps the field as `text`/`keyword`, so old and new values coexist. Queries that matched the ratio text stop matching updated documents.
+- An index that maps the field as a number (`scaled_float`, `double`) rejected every record carrying a decimal before. Those records now succeed.
+- To make existing documents consistent, re-snapshot the source or reindex the affected indexes.
+- Record keys are not changed, so document IDs stay the same: a decimal key is still written as before (`{"id":"3/2"}`), and upserts and deletes keep finding existing documents.
 
 # Source
 ElasticSearch source connector allows you to move data from multiple Elasticsearch indexes with the specified `host` and `indexes`. It uses elasticsearch search api to pull data from indexes. Upon starting it pulls batches of data from indexes, once all the data is retrieved, it then polls the search api to pull data at regular intervals. 

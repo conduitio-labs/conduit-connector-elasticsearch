@@ -1,0 +1,7 @@
+{"update":{"_id":"k1","_index":"idx","retry_on_conflict":3}}
+{"doc":{"f":"1.50"},"doc_as_upsert":true}
+{"update":{"_id":"k2","_index":"idx","retry_on_conflict":3}}
+{"doc":{"g":1.5},"doc_as_upsert":true}
+{"update":{"_id":"k3","_index":"idx","retry_on_conflict":3}}
+{"doc":{"f":"1.500"},"doc_as_upsert":true}
+{"delete":{"_id":"k4","_index":"idx"}}

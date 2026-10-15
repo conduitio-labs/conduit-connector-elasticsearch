@@ -38,6 +38,9 @@ type Destination struct {
 	getIndexName IndexFn
 
 	client client
+
+	// schemas memoizes parsed payload schemas for renderDecimals.
+	schemas parsedSchemas
 }
 
 //go:generate moq -out client_moq_test.go . client
@@ -92,8 +95,16 @@ func (d *Destination) Open(ctx context.Context) (err error) {
 func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int, error) {
 	// todo return retries
 
+	// Invariant 6: decimals go out as exact decimal text, not as the ratio
+	// encoding/json makes of a *big.Rat (#171). A failure here sends nothing,
+	// so nothing is acked.
+	docs, err := d.renderDecimals(ctx, records)
+	if err != nil {
+		return 0, err
+	}
+
 	// Prepare request payload
-	data, err := d.prepareBulkRequestPayload(records)
+	data, err := d.prepareBulkRequestPayload(docs)
 	if err != nil {
 		return 0, err
 	}
