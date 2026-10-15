@@ -47,6 +47,13 @@ The destination is at-least-once. A batch is sent as one bulk request, and a rec
 - Each of those tail records counts against `dlq.window-nack-threshold`.
 - Routing is not supported. If documents were written with routing that the connector's delete does not send (by another writer, through a routed alias, or when deleting through the base index), Elasticsearch answers the delete with 404 `not_found` from the wrong shard. A 404 on a delete is treated as success, so the stale document stays.
 
+## Avro-encoded records
+
+When a record carries a key or payload schema (`opencdc.key.schema.*` / `opencdc.payload.schema.*` metadata), the SDK decodes it before the write (`sdk.schema.extract.key.enabled` and `sdk.schema.extract.payload.enabled`, both `true` by default) and the document is built from the decoded value. Decoding uses `github.com/iskorotkov/avro/v2` through conduit-commons; earlier releases used the archived `github.com/hamba/avro/v2`.
+
+- An empty Avro array is written as `[]`. Releases up to v0.4.1 wrote it as `null`, which could not be told apart from the `null` branch of a `["null", array]` union.
+- Avro decimals are written as a fraction string (for example `"-15432/125"`), unchanged from earlier releases.
+
 # Source
 ElasticSearch source connector allows you to move data from multiple Elasticsearch indexes with the specified `host` and `indexes`. It uses elasticsearch search api to pull data from indexes. Upon starting it pulls batches of data from indexes, once all the data is retrieved, it then polls the search api to pull data at regular intervals. 
 
@@ -67,9 +74,13 @@ ElasticSearch source connector allows you to move data from multiple Elasticsear
 | `pollingPeriod`                | The duration for polling the search api for fetching new records. | `false`                                               | `"5s"` |
 | `retries`                | The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255`. Note that the higher value, the longer it may take to process retries, as a result, ingest next operations. | `false`                                               | `"0"` |
 
+The record key is `{"id": "<document id>"}` as structured data. `sdk.schema.extract.key.enabled` defaults to `false` for this source: up to v0.4.1 the SDK never ran key schema extraction for it, so keys were never Avro-encoded, and the default keeps that. Set it to `true` to have the key encoded with an Avro schema registered under `<index>.key`.
+
 # Testing
 
 Run `make test` to run all the unit and integration tests, which require Docker to be installed and running. The command will handle starting and stopping docker containers for you.
+
+The integration tests connect to `http://127.0.0.1:9200` unless `ELASTICSEARCH_HOST` is set. To run them against a container on another port, start it with `ELASTICSEARCH_PORT=<port>` (the compose files publish that port) and set `ELASTICSEARCH_HOST=http://127.0.0.1:<port>`.
 
 # Local development
 

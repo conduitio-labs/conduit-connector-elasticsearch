@@ -39,11 +39,11 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
-		destination.ConfigVersion:  elasticsearch.Version5,
-		destination.ConfigHost:     "http://127.0.0.1:9200",
-		destination.ConfigIndex:    "users",
-		destination.ConfigType:     "user",
-		destination.ConfigBulkSize: "1",
+		test.ParamVersion:  elasticsearch.Version5,
+		test.ParamHost:     test.Host(),
+		test.ParamIndex:    "users",
+		test.ParamType:     "user",
+		test.ParamBulkSize: "1",
 	}
 
 	client, err := test.GetClient(cfgRaw)
@@ -52,7 +52,7 @@ func TestOperationsWithSmallestBulkSize(t *testing.T) {
 	}
 	esClient := client.(*v5.Client).GetClient()
 
-	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
+	require.NoError(t, test.ConfigureDestination(context.Background(), dest, cfgRaw))
 	require.NoError(t, dest.Open(context.Background()))
 
 	require.True(t, assertIndexIsDeleted(esClient, "users"))
@@ -271,11 +271,11 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	dest := destination.NewDestination()
 
 	cfgRaw := map[string]string{
-		destination.ConfigVersion:  elasticsearch.Version5,
-		destination.ConfigHost:     "http://127.0.0.1:9200",
-		destination.ConfigIndex:    "users",
-		destination.ConfigType:     "user",
-		destination.ConfigBulkSize: "3",
+		test.ParamVersion:  elasticsearch.Version5,
+		test.ParamHost:     test.Host(),
+		test.ParamIndex:    "users",
+		test.ParamType:     "user",
+		test.ParamBulkSize: "3",
 	}
 
 	client, err := test.GetClient(cfgRaw)
@@ -284,7 +284,7 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	}
 	esClient := client.(*v5.Client).GetClient()
 
-	require.NoError(t, dest.Configure(context.Background(), cfgRaw))
+	require.NoError(t, test.ConfigureDestination(context.Background(), dest, cfgRaw))
 	require.NoError(t, dest.Open(context.Background()))
 
 	require.True(t, assertIndexIsDeleted(esClient, "users"))
@@ -409,7 +409,7 @@ func TestOperationsWithBiggerBulkSize(t *testing.T) {
 	})
 }
 
-func assertIndexIsDeleted(esClient *esV5.Client, index string) bool {
+func assertIndexIsDeleted(esClient *esV5.Client, index string) bool { //nolint:unparam // same shape as the v6-v8 helpers, used in require.True
 	existsResponse, err := esClient.Indices.Exists([]string{index})
 	if err != nil {
 		log.Fatalf("Cannot check if index %q exists: %s", index, err)

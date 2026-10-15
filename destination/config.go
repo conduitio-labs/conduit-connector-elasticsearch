@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate paramgen -output=paramgen.go Config
-
 package destination
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"text/template"
@@ -25,11 +24,14 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	"github.com/conduitio/conduit-commons/opencdc"
+	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
 type IndexFn func(opencdc.Record) (string, error)
 
 type Config struct {
+	sdk.DefaultDestinationMiddleware
+
 	// The version of the Elasticsearch service. One of: 5, 6, 7, 8.
 	Version elasticsearch.Version `json:"version" validate:"required"`
 	// The Elasticsearch host and port (e.g.: http://127.0.0.1:9200).
@@ -54,6 +56,19 @@ type Config struct {
 	BulkSize uint64 `json:"bulkSize" default:"1000"`
 	// The maximum number of retries of failed operations. The minimum value is `0` which disabled retry logic. The maximum value is `255.
 	Retries uint8 `json:"retries" default:"0"`
+}
+
+// Validate rejects an index that is neither a static name nor a valid Go
+// template, at configuration time as before the SDK v0.15 move, and runs the
+// middleware validations it would otherwise shadow.
+func (c *Config) Validate(ctx context.Context) error {
+	if err := c.DefaultDestinationMiddleware.Validate(ctx); err != nil {
+		return err
+	}
+	if _, err := c.IndexFunction(); err != nil {
+		return fmt.Errorf("invalid index name or index function: %w", err)
+	}
+	return nil
 }
 
 func (c Config) GetHost() string {

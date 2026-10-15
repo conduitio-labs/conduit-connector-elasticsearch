@@ -12,16 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate conn-sdk-cli specgen
+
 package elasticsearch
 
 import (
+	_ "embed"
+
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/source"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
+//go:embed connector.yaml
+var specs string
+
+// version is set at build time (see Makefile and .goreleaser.yml).
+var version = "v0.0.0-dev"
+
 var Connector = sdk.Connector{
-	NewSpecification: Specification,
+	NewSpecification: sdk.YAMLSpecification(specs, version),
 	NewSource:        source.NewSource,
 	NewDestination:   destination.NewDestination,
 }

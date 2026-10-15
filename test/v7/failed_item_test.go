@@ -39,14 +39,14 @@ func TestWrite_FailedItemIsNotReportedWritten(t *testing.T) {
 	const index = "failed_item"
 
 	cfgRaw := map[string]string{
-		destination.ConfigVersion: elasticsearch.Version7,
-		destination.ConfigHost:    "http://127.0.0.1:9200",
-		destination.ConfigIndex:   index,
-		destination.ConfigType:    "doc",
+		test.ParamVersion: elasticsearch.Version7,
+		test.ParamHost:    test.Host(),
+		test.ParamIndex:   index,
+		test.ParamType:    "doc",
 	}
 
 	dest := destination.NewDestination()
-	require.NoError(t, dest.Configure(ctx, cfgRaw))
+	require.NoError(t, test.ConfigureDestination(ctx, dest, cfgRaw))
 	require.NoError(t, dest.Open(ctx))
 	t.Cleanup(func() { require.NoError(t, dest.Teardown(ctx)) })
 

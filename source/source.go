@@ -20,7 +20,6 @@ import (
 	"sync"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
-	"github.com/conduitio/conduit-commons/config"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
@@ -37,25 +36,33 @@ type Source struct {
 
 // NewSource initialises a new source.
 func NewSource() sdk.Source {
-	return sdk.SourceWithMiddleware(&Source{}, sdk.DefaultSourceMiddleware()...)
+	// A new variable per source: the SDK parses the configuration into the
+	// value this points to.
+	keyEnabled := false
+	return sdk.SourceWithMiddleware(&Source{
+		config: Config{
+			DefaultSourceMiddleware: sdk.DefaultSourceMiddleware{
+				SourceWithSchemaExtraction: sdk.SourceWithSchemaExtraction{
+					// Invariant 6: keep the key exactly as earlier releases
+					// emitted it. Up to SDK v0.12 the key schema extraction
+					// never ran for this source (it implements Read, not
+					// ReadN, and the middleware only hooked ReadN), so the key
+					// left as structured data with no schema even though the
+					// parameter said "true". SDK v0.15 runs it on Read too,
+					// which would switch every key to Avro bytes with a
+					// "<index>.key" schema. Default to what users actually
+					// got; setting it to true opts in to the SDK behavior.
+					KeyEnabled: &keyEnabled,
+				},
+			},
+		},
+	})
 }
 
-// Parameters returns a map of named Parameters that describe how to configure the Source.
-func (s *Source) Parameters() config.Parameters {
-	return s.config.Parameters()
-}
-
-// Configure parses and stores configurations,
-// returns an error in case of invalid configuration.
-func (s *Source) Configure(ctx context.Context, cfgRaw config.Config) error {
-	sdk.Logger(ctx).Info().Msg("Configuring ElasticSearch Source...")
-
-	err := sdk.Util.ParseConfig(ctx, cfgRaw, &s.config, NewSource().Parameters())
-	if err != nil {
-		return err
-	}
-
-	return nil
+// Config returns the source configuration. The SDK parses the connector
+// configuration into it and validates it before calling Open.
+func (s *Source) Config() sdk.SourceConfig {
+	return &s.config
 }
 
 // Open parses the position and initializes the iterator.

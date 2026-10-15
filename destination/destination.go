@@ -23,13 +23,12 @@ import (
 	"net/http"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
-	"github.com/conduitio/conduit-commons/config"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
 func NewDestination() sdk.Destination {
-	return sdk.DestinationWithMiddleware(&Destination{}, sdk.DefaultDestinationMiddleware()...)
+	return sdk.DestinationWithMiddleware(&Destination{})
 }
 
 type Destination struct {
@@ -49,25 +48,20 @@ func (d *Destination) GetClient() elasticsearch.Client {
 	return d.client
 }
 
-func (d *Destination) Parameters() config.Parameters {
-	return d.config.Parameters()
+// Config returns the destination configuration. The SDK parses the connector
+// configuration into it, validates it (see Config.Validate) and then calls Open.
+func (d *Destination) Config() sdk.DestinationConfig {
+	return &d.config
 }
 
-func (d *Destination) Configure(ctx context.Context, cfg config.Config) (err error) {
-	err = sdk.Util.ParseConfig(ctx, cfg, &d.config, NewDestination().Parameters())
-	if err != nil {
-		return err
-	}
-
+func (d *Destination) Open(ctx context.Context) (err error) {
+	// Config.Validate already rejected an invalid index, so this only builds
+	// the function.
 	d.getIndexName, err = d.config.IndexFunction()
 	if err != nil {
 		return fmt.Errorf("invalid index name or index function: %w", err)
 	}
 
-	return
-}
-
-func (d *Destination) Open(ctx context.Context) (err error) {
 	// Initialize Elasticsearch client
 	d.client, err = elasticsearch.NewClient(d.config.Version, d.config)
 	if err != nil {

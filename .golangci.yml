@@ -91,6 +91,13 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      # golangci-lint v2.12 counts repeated literals in tests (config keys,
+      # fixture field names); naming each one would not make the tests
+      # clearer.
+      - path: _test\.go
+        linters:
+          - goconst
     paths:
       - third_party$
       - builtin$

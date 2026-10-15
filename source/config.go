@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate paramgen -output=paramgen.go Config
-
 package source
 
 import (
 	"time"
 
 	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
 type Config struct {
+	sdk.DefaultSourceMiddleware
+
 	// The version of the Elasticsearch service. One of: 5, 6, 7, 8.
 	Version elasticsearch.Version `json:"version" validate:"required"`
 	// The Elasticsearch host and port (e.g.: http://127.0.0.1:9200).
