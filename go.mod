@@ -4,8 +4,8 @@ go 1.26.9
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/conduitio/conduit-commons v0.8.0
-	github.com/conduitio/conduit-connector-sdk v0.15.0
+	github.com/conduitio/conduit-commons v0.10.0
+	github.com/conduitio/conduit-connector-sdk v0.17.0
 	github.com/elastic/go-elasticsearch/v5 v5.6.1
 	github.com/elastic/go-elasticsearch/v6 v6.8.10
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
@@ -23,7 +23,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/bufbuild/protocompile v0.14.2-0.20260127163740-a85d2ef77713 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/conduitio/conduit-connector-protocol v0.10.0 // indirect
+	github.com/conduitio/conduit-connector-protocol v0.11.0 // indirect
 	github.com/conduitio/evolviconf v0.1.1 // indirect
 	github.com/conduitio/evolviconf/evolviyaml v0.1.0 // indirect
 	github.com/conduitio/yaml/v3 v3.3.0 // indirect
@@ -56,6 +56,7 @@ require (
 	github.com/samber/slog-zerolog/v2 v2.9.2 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
+	github.com/twmb/franz-go/pkg/sr v1.8.0 // indirect
 	github.com/twmb/go-cache v1.4.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.44.0 // indirect

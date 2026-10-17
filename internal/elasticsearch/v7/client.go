@@ -153,12 +153,26 @@ func (c *Client) PrepareDeleteOperation(key string, index string) (interface{}, 
 
 // preparePayload encodes Record's payload as JSON.
 func preparePayload(item *opencdc.Record) (json.RawMessage, error) {
+	if item.Payload.After == nil {
+		// Invariant 3: an absent payload still has to be written. JSON null is
+		// the faithful encoding and keeps the record flowing (never skip).
+		return []byte("null"), nil
+	}
+
 	switch itemPayload := item.Payload.After.(type) {
 	case opencdc.StructuredData:
 		return json.Marshal(itemPayload)
 
 	default:
+		payload := itemPayload.Bytes()
+		if len(payload) == 0 {
+			// Invariant 6: an empty RawData is an absent payload (the SDK no
+			// longer invents an all-null record for it). Write JSON null rather
+			// than emit an empty json.RawMessage, which fails to marshal and
+			// drops the record.
+			return []byte("null"), nil
+		}
 		// Nothing more can be done, we can trust the source to provide valid JSON
-		return itemPayload.Bytes(), nil
+		return payload, nil
 	}
 }
