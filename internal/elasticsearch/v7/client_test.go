@@ -166,6 +166,48 @@ func TestClient_PrepareUpsertOperation(t *testing.T) {
 	})
 }
 
+func TestClient_PreparePayloadEmptyWritesNull(t *testing.T) {
+	client := Client{cfg: &configMock{}}
+
+	// SDK #411 leaves an empty (zero-length) or nil payload part as absent
+	// instead of decoding it into an invented all-null record. preparePayload
+	// must write JSON null, not an empty document, so the record still reaches
+	// Elasticsearch (invariant 3) without inventing data (invariant 6).
+	t.Run("create with empty RawData", func(t *testing.T) {
+		metadata, payload, err := client.PrepareCreateOperation(
+			sdk.SourceUtil{}.NewRecordCreate(nil, nil, nil, opencdc.RawData{}),
+			indexName,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, metadata)
+		require.Equal(t, bulkRequestCreateSource("null"), payload)
+	})
+
+	t.Run("create with nil payload", func(t *testing.T) {
+		metadata, payload, err := client.PrepareCreateOperation(
+			sdk.SourceUtil{}.NewRecordCreate(nil, nil, nil, nil),
+			indexName,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, metadata)
+		require.Equal(t, bulkRequestCreateSource("null"), payload)
+	})
+
+	t.Run("upsert with empty RawData", func(t *testing.T) {
+		metadata, payload, err := client.PrepareUpsertOperation(
+			"key",
+			sdk.SourceUtil{}.NewRecordUpdate(nil, nil, nil, nil, opencdc.RawData{}),
+			indexName,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, metadata)
+		require.Equal(t, bulkRequestOptionalSource{
+			Doc:         json.RawMessage("null"),
+			DocAsUpsert: true,
+		}, payload)
+	})
+}
+
 func TestClient_PrepareDeleteOperation(t *testing.T) {
 	t.Run("Successfully prepares delete operation", func(t *testing.T) {
 		client := Client{

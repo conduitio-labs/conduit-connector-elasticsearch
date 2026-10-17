@@ -374,6 +374,56 @@ var acceptedChanges = map[string][]acceptedChange{
 	"array-nil":                 emptyArray(`{"doc":{"f":null}`, `{"doc":{"f":[]}`),
 	"negative-string-len-raw":   errorWording("ReadSTRING", "ReadString"),
 	"negative-bytes-len-raw":    errorWording("ReadBYTES", "ReadBytes"),
+
+	// Conduit-commons v0.10.0 + SDK v0.17.0 (the protocol-v3 stack) make two
+	// intentional changes that move the codec away from the frozen hamba/avro
+	// behaviour, each pinned from -> to below.
+	//
+	// SDK #411: a zero-length RawData payload is "absent", so the middleware no
+	// longer decodes it into an invented all-null record. The destination now
+	// writes JSON null for an absent/empty non-tombstone payload (see
+	// preparePayload in internal/elasticsearch/v*), so the document body
+	// changes from the invented {"f":null}/{} to null.
+	"null":         {{"bulk", `{"doc":{"f":null}`, `{"doc":null`}},
+	"empty-record": {{"bulk", `{"doc":{}`, `{"doc":null`}},
+	// The direct codec decode of a zero-length payload for a string field is
+	// now a truncation error (#311) instead of an invented {"f": nil}, but the
+	// destination still writes null because the payload is absent (#411).
+	"empty-bytes-raw": {
+		{"decoded", `map{"f": <nil>}`, ""},
+		{"decodeError", "", "failed to unmarshal data with schema equivalence.empty-bytes-raw.payload:1 (id: 231): could not unmarshal from avro: avro input ends before the value is complete (0 bytes): reading long: EOF"},
+		{"bulk", `{"doc":{"f":null}`, `{"doc":null`},
+	},
+	// #311 wording: the codec now states the truncation before the underlying
+	// EOF. Same failure, same place, and the record still fails the write.
+	"truncated-raw": errorWording(
+		"could not unmarshal from avro: opencdc.StructuredData: unexpected EOF",
+		"could not unmarshal from avro: avro input ends before the value is complete (2 bytes): opencdc.StructuredData: unexpected EOF",
+	),
+	// The codec now wraps the field-level marshal error.
+	"map-int-keys": {{
+		"encodeError",
+		"could not marshal into avro: f: avro: map[int]interface {} is unsupported for Avro map",
+		"could not marshal into avro: failed to marshal avro value: avro: map[int]interface {} is unsupported for Avro map",
+	}},
+}
+
+// strictRejects lists the malformed raw inputs that conduit-commons v0.10.0
+// (fix(schema/avro)!: reject truncated input and trailing bytes in Unmarshal,
+// #311) now refuses. The frozen hamba/avro fixture records the old lenient
+// result, which wrote a partial or nil-field record to Elasticsearch; the new
+// codec rejects the record outright. The whole destination result is replaced
+// (decoded and bulk empty, written 0, decode/write error set), so the change is
+// pinned per case and cannot silently spread.
+var strictRejects = map[string]struct{ decodeError, writeError string }{
+	"trailing-garbage-raw": {
+		decodeError: "failed to unmarshal data with schema equivalence.trailing-garbage-raw.payload:1 (id: 233): could not unmarshal from avro: avro input has bytes left over after the value (3 bytes in total)",
+		writeError:  "record 0: failed to decode payload.after: failed to unmarshal bytes with schema: failed to unmarshal data with schema equivalence.trailing-garbage-raw.payload:1 (id: 233): could not unmarshal from avro: avro input has bytes left over after the value (3 bytes in total)",
+	},
+	"huge-array-count-raw": {
+		decodeError: "failed to unmarshal data with schema equivalence.huge-array-count-raw.payload:1 (id: 237): could not unmarshal from avro: avro input ends before the value is complete (3 bytes): reading []interface {}: reading int: EOF",
+		writeError:  "record 0: failed to decode payload.after: failed to unmarshal bytes with schema: failed to unmarshal data with schema equivalence.huge-array-count-raw.payload:1 (id: 237): could not unmarshal from avro: avro input ends before the value is complete (3 bytes): reading []interface {}: reading int: EOF",
+	},
 }
 
 // applyAccepted rewrites the frozen fixture w with the accepted changes for
@@ -391,8 +441,20 @@ func applyAccepted(t *testing.T, w *destinationFixture) {
 			f = &w.DecodeError
 		case "writeError":
 			f = &w.WriteError
+		case "encodeError":
+			f = &w.EncodeError
 		default:
 			t.Fatalf("%s: unknown field %q in acceptedChanges", w.Name, c.field)
+		}
+		if c.from == "" {
+			// The frozen field is empty because the old codec produced nothing
+			// for it; the new codec does. Set it rather than substitute.
+			if *f != "" {
+				t.Errorf("%s: frozen %s is not empty (%q), the accepted change is stale", w.Name, c.field, *f)
+				continue
+			}
+			*f = c.to
+			continue
 		}
 		if !strings.Contains(*f, c.from) {
 			t.Errorf("%s: frozen %s does not contain %q, the accepted change is stale:\n%s", w.Name, c.field, c.from, *f)
@@ -578,10 +640,17 @@ func compareDestination(t *testing.T, cases []destinationCase, wantDst map[strin
 			compareField(t, g.Name, "payload Avro bytes", w.PayloadAvro, g.PayloadAvro)
 		}
 		compareField(t, g.Name, "key Avro bytes", w.KeyAvro, g.KeyAvro)
-		compareField(t, g.Name, "encode error", w.EncodeError, g.EncodeError)
 		if applyChanges {
 			applyAccepted(t, &w)
+			if r, ok := strictRejects[g.Name]; ok {
+				w.Decoded = ""
+				w.DecodeError = r.decodeError
+				w.Bulk = ""
+				w.Written = 0
+				w.WriteError = r.writeError
+			}
 		}
+		compareField(t, g.Name, "encode error", w.EncodeError, g.EncodeError)
 		if c, ok := decimalChange[g.Name]; ok {
 			if !strings.Contains(w.Bulk, c.docFrom) {
 				t.Errorf("%s: frozen bulk body does not contain %s:\n%s", g.Name, c.docFrom, w.Bulk)
@@ -610,6 +679,11 @@ func compareDestination(t *testing.T, cases []destinationCase, wantDst map[strin
 	for name := range decimalChange {
 		if !caseNames[name] {
 			t.Errorf("%s: listed in decimalChange but not a case", name)
+		}
+	}
+	for name := range strictRejects {
+		if !caseNames[name] {
+			t.Errorf("%s: listed in strictRejects but not a case", name)
 		}
 	}
 }
