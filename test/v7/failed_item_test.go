@@ -21,11 +21,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
-	v7 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v7"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/test"
 	"github.com/conduitio/conduit-commons/opencdc"
+	"github.com/conduitio/conduit-connector-elasticsearch/destination"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch"
+	v7 "github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/v7"
+	"github.com/conduitio/conduit-connector-elasticsearch/test"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/stretchr/testify/require"
 )

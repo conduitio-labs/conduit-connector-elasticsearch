@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/api"
 
 	"github.com/elastic/go-elasticsearch/v5/esapi"
 )

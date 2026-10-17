@@ -5,8 +5,8 @@ package destination
 
 import (
 	"context"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	"github.com/conduitio/conduit-commons/opencdc"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	"io"
 	"sync"
 )

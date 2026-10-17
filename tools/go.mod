@@ -1,4 +1,4 @@
-module github.com/conduitio-labs/conduit-connector-elasticsearch/tools
+module github.com/conduitio/conduit-connector-elasticsearch/tools
 
 go 1.26.9
 

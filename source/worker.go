@@ -20,9 +20,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	"github.com/conduitio/conduit-commons/opencdc"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/api"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
