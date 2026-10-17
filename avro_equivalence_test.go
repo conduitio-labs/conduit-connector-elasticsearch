@@ -56,9 +56,9 @@ import (
 	"testing"
 	"time"
 
-	elasticsearch "github.com/conduitio-labs/conduit-connector-elasticsearch"
 	"github.com/conduitio/conduit-commons/opencdc"
 	cavro "github.com/conduitio/conduit-commons/schema/avro"
+	elasticsearch "github.com/conduitio/conduit-connector-elasticsearch"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/conduitio/conduit-connector-sdk/schema"
 )

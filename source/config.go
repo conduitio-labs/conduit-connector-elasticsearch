@@ -17,7 +17,7 @@ package source
 import (
 	"time"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 

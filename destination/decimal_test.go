@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/decimaltext"
-	v8 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v8"
 	"github.com/conduitio/conduit-commons/opencdc"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/decimaltext"
+	v8 "github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/v8"
 	"github.com/conduitio/conduit-connector-sdk/schema"
 	"github.com/stretchr/testify/require"
 )

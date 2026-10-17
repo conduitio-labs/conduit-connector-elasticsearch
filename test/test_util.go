@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"os"
 
-	es "github.com/conduitio-labs/conduit-connector-elasticsearch"
-	esDestination "github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
+	es "github.com/conduitio/conduit-connector-elasticsearch"
+	esDestination "github.com/conduitio/conduit-connector-elasticsearch/destination"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 

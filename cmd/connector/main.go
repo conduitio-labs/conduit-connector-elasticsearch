@@ -15,7 +15,7 @@
 package main
 
 import (
-	elasticsearch "github.com/conduitio-labs/conduit-connector-elasticsearch"
+	elasticsearch "github.com/conduitio/conduit-connector-elasticsearch"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 

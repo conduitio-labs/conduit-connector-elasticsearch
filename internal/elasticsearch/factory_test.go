@@ -18,10 +18,10 @@ import (
 	"fmt"
 	"testing"
 
-	v5 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v5"
-	v6 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v6"
-	v7 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v7"
-	v8 "github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch/v8"
+	v5 "github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/v5"
+	v6 "github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/v6"
+	v7 "github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/v7"
+	v8 "github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch/v8"
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/require"
 )

@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/decimaltext"
 	"github.com/conduitio/conduit-commons/opencdc"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/decimaltext"
 	"github.com/conduitio/conduit-connector-sdk/schema"
 	"github.com/iskorotkov/avro/v2"
 )

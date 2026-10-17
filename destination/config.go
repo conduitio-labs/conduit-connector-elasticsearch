@@ -22,8 +22,8 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/internal/elasticsearch"
 	"github.com/conduitio/conduit-commons/opencdc"
+	"github.com/conduitio/conduit-connector-elasticsearch/internal/elasticsearch"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 

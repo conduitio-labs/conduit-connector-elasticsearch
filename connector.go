@@ -19,8 +19,8 @@ package elasticsearch
 import (
 	_ "embed"
 
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/destination"
-	"github.com/conduitio-labs/conduit-connector-elasticsearch/source"
+	"github.com/conduitio/conduit-connector-elasticsearch/destination"
+	"github.com/conduitio/conduit-connector-elasticsearch/source"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
